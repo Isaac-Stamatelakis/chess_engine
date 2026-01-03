@@ -9,6 +9,8 @@
 #include "SFML/Graphics/RenderWindow.hpp"
 #include <unordered_map>
 
+#include "SFML/Graphics/Sprite.hpp"
+
 struct PieceTextureKey {
     PieceType pieceType;
     PieceColor color;
@@ -32,18 +34,19 @@ static constexpr int TILE_SIZE = 64;
 
 class BoardRenderer {
 public:
-    BoardRenderer(sf::RenderWindow& window);
-    void Render(const GameBoard& gameboard);
+    BoardRenderer();
+    void Render(const std::unique_ptr<sf::RenderWindow>& window);
+    void LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard);
 
 private:
-    sf::RenderWindow& window;
-    sf::RectangleShape squares[ROWS][ROWS];
+    sf::RectangleShape squares[GRID_SIZE][GRID_SIZE];
+    std::unique_ptr<sf::Sprite> pieceSprites[GRID_SIZE][GRID_SIZE];
     std::unordered_map<PieceTextureKey, sf::Texture, PieceKeyHash> pieceTextures;
     void LoadGrid();
-    void RenderGrid();
-    void RenderBoard(const GameBoard& gameboard);
+    void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window) const;
+    void RenderPieces(const std::unique_ptr<sf::RenderWindow>& window);
     void LoadTextures();
-    void LoadTexture(PieceType piece, PieceColor pieceColor, std::string spriteName);
+    void LoadTexture(PieceType piece, PieceColor pieceColor, const std::string &spriteName);
 
 };
 
