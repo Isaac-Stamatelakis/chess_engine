@@ -1,0 +1,51 @@
+//
+// Created by Isaac on 2026-01-03.
+//
+
+#ifndef CHESSENGINE_BOARDRENDERER_H
+#define CHESSENGINE_BOARDRENDERER_H
+#include "GameBoard.h"
+#include "SFML/Graphics/RectangleShape.hpp"
+#include "SFML/Graphics/RenderWindow.hpp"
+#include <unordered_map>
+
+struct PieceTextureKey {
+    PieceType pieceType;
+    PieceColor color;
+    bool operator==(const PieceTextureKey& other) const {
+        return pieceType == other.pieceType && color == other.color;
+    }
+};
+struct PieceKeyHash {
+    std::size_t operator()(const PieceTextureKey& pieceTextureKey) const {
+        return static_cast<std::size_t>(pieceTextureKey.color) * 128 + static_cast<std::size_t>(pieceTextureKey.pieceType);
+    }
+};
+
+struct PieceTextureLoadData {
+    PieceType pieceType;
+    PieceColor color;
+    std::string spriteName;
+};
+
+static constexpr int TILE_SIZE = 64;
+
+class BoardRenderer {
+public:
+    BoardRenderer(sf::RenderWindow& window);
+    void Render(const GameBoard& gameboard);
+
+private:
+    sf::RenderWindow& window;
+    sf::RectangleShape squares[ROWS][ROWS];
+    std::unordered_map<PieceTextureKey, sf::Texture, PieceKeyHash> pieceTextures;
+    void LoadGrid();
+    void RenderGrid();
+    void RenderBoard(const GameBoard& gameboard);
+    void LoadTextures();
+    void LoadTexture(PieceType piece, PieceColor pieceColor, std::string spriteName);
+
+};
+
+
+#endif //CHESSENGINE_BOARDRENDERER_H

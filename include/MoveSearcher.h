@@ -23,8 +23,7 @@ private:
     void GetBishopMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
     void GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
     void GenerateSlidingMoves(const Piece& piece, PiecePosition piecePosition,PieceMoveQuery &moveQuery, const GameBoard &gameBoard,const int directions[][2], int directionCount) const;
-    void AddPawnPushMove(const Piece& piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard &gameBoard, int movement, int
-                         &, int direction) const;
+    void AddPawnPushMove(const Piece& piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard &gameBoard, int movement, int& idx, int direction) const;
 };
 
 
