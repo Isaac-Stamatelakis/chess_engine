@@ -4,25 +4,8 @@
 
 #include "../include/GameBoard.h"
 
-void GameBoard::GetValidMoves(int piecePosition, PieceMoveQuery moveQuery) const {
-    Piece piece = Pieces[piecePosition];
 
-    switch (piece.type) {
-        case None:
-            moveQuery.MoveCount = 0;
-            break;
-        case King:
-            break;
-        case Queen:
-            break;
-        case Rook:
-            break;
-        case Knight:
-            break;
-        case Bishop:
-            break;
-        case Pawn:
-            break;
-    }
+bool GameBoard::IsOccupied(PiecePosition piecePosition) const {
+    const Piece& piece = Pieces[piecePosition.ToIndex()];
+    return piece.type != PieceType::None;
 }
-

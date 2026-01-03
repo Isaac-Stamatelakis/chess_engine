@@ -6,7 +6,8 @@
 #define CHESSENGINE_GAMEBOARD_H
 #include <array>
 
-static constexpr int BOARD_SIZE = 64;
+static constexpr int ROWS = 8;
+static constexpr int BOARD_SIZE = ROWS*ROWS;
 
 enum PieceType {
     None = 0,
@@ -20,8 +21,7 @@ enum PieceType {
 
 enum PieceColor {
     White,
-    Black,
-    NoColor
+    Black
 };
 
 enum PieceMoveState {
@@ -29,28 +29,53 @@ enum PieceMoveState {
     Moved
 };
 
+enum PieceProtectionState {
+    NotProtected,
+    Protected,
+};
+
 struct Piece {
     PieceType type;
     PieceColor color;
-    PieceMoveState MoveState;
+    PieceMoveState moveState;
+    PieceProtectionState protectionState;
+};
+
+struct PiecePosition {
+    short row;
+    short col;
+
+    int ToIndex() const {
+        return row * ROWS + col;
+    }
+
+    bool OutOfBounds() const {
+        return row >= BOARD_SIZE || col >= BOARD_SIZE || row < 0 || col < 0;
+    }
+
+    PiecePosition operator+(const PiecePosition& other) const {
+        short newRow = row + other.row;
+        short newCol = col + other.col;
+        return {newRow, newCol};
+    }
+
+    PiecePosition operator-(const PiecePosition& other) const {
+        short newRow = row + other.row;
+        short newCol = col + other.col;
+        return {newRow, newCol};
+    }
 };
 
 struct PieceMove {
     Piece piece;
-    int Position;
-};
-
-struct PieceMoveQuery {
-    std::array<int, BOARD_SIZE> moves;
-    int MoveCount;
+    PiecePosition Position;
 };
 
 class GameBoard {
 public:
     Piece Pieces[BOARD_SIZE];
     PieceMove LastMove;
-
-    void GetValidMoves(int piecePosition, PieceMoveQuery moveQuery) const;
+    bool IsOccupied(PiecePosition piecePosition) const;
 };
 
 
