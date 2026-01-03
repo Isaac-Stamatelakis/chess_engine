@@ -4,6 +4,8 @@
 
 #ifndef CHESSENGINE_BOARDRENDERER_H
 #define CHESSENGINE_BOARDRENDERER_H
+#include <bitset>
+
 #include "GameBoard.h"
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
@@ -30,25 +32,30 @@ struct PieceTextureLoadData {
     std::string spriteName;
 };
 
-static constexpr int TILE_SIZE = 64;
+static constexpr int TILE_SIZE = 60;
+static constexpr int NO_POSITION_SELECTED = -1;
 
 class BoardRenderer {
 public:
     BoardRenderer();
     void Render(const std::unique_ptr<sf::RenderWindow>& window);
     void LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor);
-
+    void OnMouseEvent(sf::Mouse::Button button, sf::Vector2i mousePosition);
 private:
     sf::RectangleShape squares[GRID_SIZE][GRID_SIZE];
     std::unique_ptr<sf::Sprite> pieceSprites[GRID_SIZE][GRID_SIZE];
     std::unordered_map<PieceTextureKey, sf::Texture, PieceKeyHash> pieceTextures;
+    std::bitset<GRID_SIZE*GRID_SIZE> highlightedSquares;
+    int selectedPositionIndex = NO_POSITION_SELECTED;
     void LoadGrid();
-    void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window) const;
+    void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window);
     void RenderPieces(const std::unique_ptr<sf::RenderWindow>& window);
     void LoadTextures();
     void LoadTexture(PieceType piece, PieceColor pieceColor, const std::string &spriteName);
-
+    void SelectSquare(PiecePosition piecePosition);
+    void HighlightSquare(PiecePosition piecePosition);
 };
+
 
 
 #endif //CHESSENGINE_BOARDRENDERER_H

@@ -19,11 +19,20 @@ int main() {
     {
         while (const std::optional event = window->pollEvent())
         {
-            if (event->is<sf::Event::Closed>())
-            {
+            if (event->is<sf::Event::Closed>()) {
                 window->close();
             }
+            else if (const auto* mousePress = event->getIf<sf::Event::MouseButtonPressed>()) {
+                boardRenderer->OnMouseEvent(mousePress->button, mousePress->position);
+                if (mousePress->button == sf::Mouse::Button::Left) {
+
+                }
+            } else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+            {
+                // May need later
+            }
         }
+
         window->clear();
 
         boardRenderer->Render(window);

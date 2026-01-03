@@ -38,17 +38,56 @@ void BoardRenderer::LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard, P
     }
 }
 
+void BoardRenderer::OnMouseEvent(sf::Mouse::Button button, sf::Vector2i mousePosition) {
+    short px = mousePosition.x / TILE_SIZE;
+    short py = mousePosition.y / TILE_SIZE;
+    PiecePosition piecePosition {px,py};
+    if (piecePosition.OutOfBounds()) return;
+
+    switch (button) {
+        case sf::Mouse::Button::Left:
+            SelectSquare(piecePosition);
+            break;
+        case sf::Mouse::Button::Right:
+            HighlightSquare(piecePosition);
+            break;
+    }
+}
+
+
 void BoardRenderer::Render(const std::unique_ptr<sf::RenderWindow>& window) {
     RenderGrid(window);
     RenderPieces(window);
 }
 
-void BoardRenderer::RenderGrid(const std::unique_ptr<sf::RenderWindow>& window) const {
-    for (int y = 0; y < GRID_SIZE; ++y)
+void BoardRenderer::RenderGrid(const std::unique_ptr<sf::RenderWindow>& window) {
+    sf::Color lightColor(240, 217, 181); // light beige
+    sf::Color darkColor(181, 136, 99);   // dark brown
+
+    sf::Color selectedColor(246, 246, 105);    // soft yellow (selected square)
+    sf::Color highlightedColor(255, 80, 80);   // soft red (valid moves / attacks)
+
+    for (int x = 0; x < GRID_SIZE; ++x)
     {
-        for (int x = 0; x < GRID_SIZE; ++x)
+        for (int y = 0; y < GRID_SIZE; ++y)
         {
-            window->draw(squares[y][x]);
+            sf::Color color;
+            if ((x + y) % 2 == 0) {
+                color = lightColor;
+            }
+            else {
+                color = darkColor;
+            }
+
+            int idx = x *GRID_SIZE + y;
+            if (idx == selectedPositionIndex) {
+                squares[y][x].setFillColor(selectedColor);
+            } else if (highlightedSquares.test(idx)) {
+                squares[y][x].setFillColor(highlightedColor*color);
+            } else {
+                squares[y][x].setFillColor(color);
+            }
+            window->draw(squares[x][y]);
         }
     }
 }
@@ -95,24 +134,33 @@ void BoardRenderer::LoadTexture(PieceType piece, PieceColor pieceColor, const st
     pieceTextures[textureKey] = texture;
 }
 
+void BoardRenderer::SelectSquare(PiecePosition piecePosition) {
+    highlightedSquares.reset();
+    int idx = piecePosition.ToIndex();
+    if (idx == selectedPositionIndex) return;
+    selectedPositionIndex = idx;
+}
+
+void BoardRenderer::HighlightSquare(PiecePosition piecePosition) {
+    selectedPositionIndex = NO_POSITION_SELECTED;
+    int idx = piecePosition.ToIndex();
+    if (highlightedSquares.test(idx)) {
+        highlightedSquares.reset(idx);
+    } else {
+        highlightedSquares.set(idx);
+    }
+
+}
+
 
 void BoardRenderer::LoadGrid() {
-    sf::Color lightColor(240, 217, 181); // light beige
-    sf::Color darkColor(181, 136, 99);   // dark brown
-
-    for (int y = 0; y < GRID_SIZE; ++y)
+    for (int x = 0; x < GRID_SIZE; ++x)
     {
-        for (int x = 0; x < GRID_SIZE; ++x)
+        for (int y = 0; y < GRID_SIZE; ++y)
         {
             squares[y][x].setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
             const sf::Vector2f location(x * TILE_SIZE, y * TILE_SIZE);
             squares[y][x].setPosition(location);
-
-            // Alternate colors
-            if ((x + y) % 2 == 0)
-                squares[y][x].setFillColor(lightColor);
-            else
-                squares[y][x].setFillColor(darkColor);
         }
     }
 }
