@@ -13,7 +13,7 @@ int main() {
     window->setFramerateLimit(144);
 
     std::unique_ptr<BoardRenderer> boardRenderer = std::make_unique<BoardRenderer>();
-    boardRenderer->LoadGameBoard(gameBoard, White);
+    boardRenderer->LoadGameBoard(gameBoard, Black);
 
     while (window->isOpen())
     {
@@ -23,11 +23,11 @@ int main() {
                 window->close();
             }
             else if (const auto* mousePress = event->getIf<sf::Event::MouseButtonPressed>()) {
-                boardRenderer->OnMouseEvent(mousePress->button, mousePress->position);
-                if (mousePress->button == sf::Mouse::Button::Left) {
-
-                }
-            } else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+                boardRenderer->OnMouseDown(mousePress->button, mousePress->position);
+            }  else if (const auto* mouseRelease = event->getIf<sf::Event::MouseButtonReleased>()) {
+                boardRenderer->OnMouseRelease(mouseRelease->button, mouseRelease->position);
+            }
+            else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
             {
                 // May need later
             }
