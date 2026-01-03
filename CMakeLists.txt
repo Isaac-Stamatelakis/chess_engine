@@ -12,7 +12,9 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(ChessEngine src/main.cpp)
+add_executable(ChessEngine src/main.cpp
+        src/GameBoard.cpp
+        src/GameBoard.cpp)
 
 target_compile_features(ChessEngine PRIVATE cxx_std_20)
 target_link_libraries(ChessEngine PRIVATE SFML::Graphics)
