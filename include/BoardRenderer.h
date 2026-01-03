@@ -36,7 +36,7 @@ class BoardRenderer {
 public:
     BoardRenderer();
     void Render(const std::unique_ptr<sf::RenderWindow>& window);
-    void LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard);
+    void LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor);
 
 private:
     sf::RectangleShape squares[GRID_SIZE][GRID_SIZE];

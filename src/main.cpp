@@ -13,7 +13,7 @@ int main() {
     window->setFramerateLimit(144);
 
     std::unique_ptr<BoardRenderer> boardRenderer = std::make_unique<BoardRenderer>();
-    boardRenderer->LoadGameBoard(gameBoard);
+    boardRenderer->LoadGameBoard(gameBoard, White);
 
     while (window->isOpen())
     {

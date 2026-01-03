@@ -12,7 +12,7 @@ BoardRenderer::BoardRenderer() {
     LoadTextures();
 }
 
-void BoardRenderer::LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard) {
+void BoardRenderer::LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor) {
     for (int row = 0; row < GRID_SIZE; ++row) {
         for (int col = 0; col < GRID_SIZE; ++col) {
             pieceSprites[row][col] = nullptr;
@@ -23,7 +23,15 @@ void BoardRenderer::LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard) {
 
             sf::Texture& texture = pieceTextures[pieceTextureKey];
             std::unique_ptr<sf::Sprite> sprite = std::make_unique<sf::Sprite>(texture);
-            sf::Vector2f position {static_cast<float>(row*TILE_SIZE),static_cast<float>(col*TILE_SIZE)};
+
+            int viewRow = row;
+            int viewCol = col;
+            if (viewColor == White) {
+                viewCol = GRID_SIZE - viewCol - 1;
+            }
+
+            sf::Vector2f position {static_cast<float>(viewRow*TILE_SIZE),static_cast<float>(viewCol*TILE_SIZE)};
+
             sprite.get()->setPosition(position);
             pieceSprites[row][col] = std::move(sprite);
         }
