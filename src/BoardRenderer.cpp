@@ -124,7 +124,7 @@ void BoardRenderer::RenderPieces(const std::unique_ptr<sf::RenderWindow>& window
     }
 }
 
-void BoardRenderer::RenderMovePositions(const std::unique_ptr<sf::RenderWindow> &window) {
+void BoardRenderer::RenderMovePositions(const std::unique_ptr<sf::RenderWindow> &window) const {
     for (const std::unique_ptr<sf::Sprite>& sprite : movePositionSprites) {
         window->draw(*sprite);
     }
@@ -170,9 +170,9 @@ void BoardRenderer::SelectSquare(PiecePosition piecePosition) {
         return;
     }
 
-
     selectedPieceFollowState = Active;
     selectedPiecePosition = piecePosition;
+    LoadMoveSprites(piecePosition);
 }
 
 void BoardRenderer::HighlightSquare(PiecePosition piecePosition) {
@@ -183,7 +183,7 @@ void BoardRenderer::HighlightSquare(PiecePosition piecePosition) {
     } else {
         highlightedSquares.Highlight(piecePosition);
     }
-
+    ClearMoveSprites();
 }
 
 sf::Texture BoardRenderer::LoadTexture(const std::string &spriteName) {
@@ -195,9 +195,30 @@ sf::Texture BoardRenderer::LoadTexture(const std::string &spriteName) {
     return texture;
 }
 
-void BoardRenderer::SetMoveSprites(PiecePosition position) {
+void BoardRenderer::LoadMoveSprites(PiecePosition position) {
+    MoveSearcher::GetValidMoves(position, pieceMoveQuery, gameBoard);
 
+    ClearMoveSprites();
+    movePositionSprites.reserve(pieceMoveQuery.moveCount);
+
+    for (int i = 0; i < pieceMoveQuery.moveCount; i++) {
+        PieceMove pieceMove = pieceMoveQuery.moves[i];
+
+        const Piece& piece = gameBoard->GetPiece(pieceMove.Position);
+        const sf::Texture& texture = piece.type == None ? textures.moveTexture : textures.captureTexture;
+
+        std::unique_ptr<sf::Sprite> sprite = std::make_unique<sf::Sprite>(texture);
+        float rowPosition = TILE_SIZE * pieceMove.Position.row;
+        float columnPosition = TILE_SIZE * pieceMove.Position.col;
+
+        sf::Vector2f position{columnPosition, rowPosition};
+        sprite->setPosition(position);
+        movePositionSprites.push_back(std::move(sprite));
+    }
 }
+
+
+
 
 void BoardRenderer::RestoreSelectedPiecePosition() const {
     if (!selectedPiecePosition.has_value()) return;
@@ -210,6 +231,10 @@ void BoardRenderer::RestoreSelectedPiecePosition() const {
 
     sf::Vector2f position {static_cast<float>(piecePosition.col*TILE_SIZE),static_cast<float>(piecePosition.row*TILE_SIZE)};
     sprite.get()->setPosition(position);
+}
+
+void BoardRenderer::ClearMoveSprites() {
+    movePositionSprites.clear();
 }
 
 void BoardRenderer::LoadGrid() {

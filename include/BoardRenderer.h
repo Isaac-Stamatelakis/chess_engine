@@ -11,8 +11,11 @@
 #include "SFML/Graphics/RenderWindow.hpp"
 #include <unordered_map>
 
+#include "MoveSearcher.h"
 #include "SFML/Graphics/Sprite.hpp"
 #include "SFML/Graphics/Texture.hpp"
+
+class MoveSearcher;
 
 struct PieceTextureKey {
     PieceType pieceType;
@@ -84,10 +87,11 @@ private:
     std::optional<PiecePosition> selectedPiecePosition;
     SelectedPieceFollowState selectedPieceFollowState = Inactive;
     std::unique_ptr<GameBoard>& gameBoard;
+    PieceMoveQuery pieceMoveQuery;
     void LoadGrid();
     void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window);
     void RenderPieces(const std::unique_ptr<sf::RenderWindow>& window);
-    void RenderMovePositions(const std::unique_ptr<sf::RenderWindow>& window);
+    void RenderMovePositions(const std::unique_ptr<sf::RenderWindow>& window) const;
     void LoadTextures();
     void LoadPieceTexture(PieceType piece, PieceColor pieceColor, const std::string &spriteName);
     void SelectSquare(PiecePosition piecePosition);
@@ -95,8 +99,9 @@ private:
 
     void LoadGameBoard(PieceColor viewColor);
     sf::Texture LoadTexture(const std::string &path);
-    void SetMoveSprites(PiecePosition position);
+    void LoadMoveSprites(PiecePosition position);
     void RestoreSelectedPiecePosition() const;
+    void ClearMoveSprites();
 };
 
 
