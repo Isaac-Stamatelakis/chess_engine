@@ -67,7 +67,13 @@ struct HighlightedSquares {
 
 enum SelectedPieceFollowState {
     Active,
-    Inactive
+    Inactive,
+    DoubleClick
+};
+
+enum PieceMoveResult {
+    MoveSuccess,
+    MoveFail,
 };
 static constexpr int TILE_SIZE = 60;
 
@@ -106,6 +112,9 @@ private:
     void ClearMoveSprites();
     void MoveSelectedPiece(const PieceMove& move);
     void LoadPieceSprite(PiecePosition piecePosition);
+    void ClearSelectedPiece();
+
+    PieceMoveResult TryMoveToPosition(PiecePosition piecePosition);
 };
 
 

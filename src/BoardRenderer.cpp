@@ -47,6 +47,23 @@ void BoardRenderer::LoadPieceSprite(PiecePosition piecePosition) {
     pieceSprites[piecePosition.col][piecePosition.row] = std::move(sprite);
 }
 
+void BoardRenderer::ClearSelectedPiece() {
+    selectedPiecePosition = std::nullopt;
+    selectedPieceFollowState = Inactive;
+    ClearMoveSprites();
+}
+
+PieceMoveResult BoardRenderer::TryMoveToPosition(PiecePosition piecePosition) {
+    for (int i = 0; i < pieceMoveQuery.moveCount; i++) {
+        const PieceMove& move = pieceMoveQuery.moves[i];
+        if (move.Position == piecePosition) {
+            MoveSelectedPiece(move);
+            return MoveSuccess;
+        }
+    }
+    return MoveFail;
+}
+
 void BoardRenderer::OnMouseDown(sf::Mouse::Button button, sf::Vector2i mousePosition) {
     short col = mousePosition.x / TILE_SIZE;
     short row = mousePosition.y / TILE_SIZE;
@@ -54,12 +71,18 @@ void BoardRenderer::OnMouseDown(sf::Mouse::Button button, sf::Vector2i mousePosi
     if (piecePosition.OutOfBounds()) return;
 
     switch (button) {
-        case sf::Mouse::Button::Left:
-            SelectSquare(piecePosition);
+        case sf::Mouse::Button::Left: {
+            PieceMoveResult moveResult = TryMoveToPosition(piecePosition);
+            if (moveResult == MoveFail) {
+                SelectSquare(piecePosition);
+            }
             break;
-        case sf::Mouse::Button::Right:
+        }
+        case sf::Mouse::Button::Right: {
             HighlightSquare(piecePosition);
             break;
+        }
+
     }
 }
 
@@ -70,20 +93,19 @@ void BoardRenderer::OnMouseRelease(sf::Mouse::Button button, sf::Vector2i mouseP
 
     switch (button) {
         case sf::Mouse::Button::Left:
-            selectedPieceFollowState = Inactive;
-
-            for (int i =0; i < pieceMoveQuery.moveCount; i++) {
-                const PieceMove& move = pieceMoveQuery.moves[i];
-                std::cout << move.Position.row << ", " << move.Position.col << std::endl;
-                if (move.Position == piecePosition) {
-                    MoveSelectedPiece(move);
-                    return;
-                }
+            PieceMoveResult moveResult = TryMoveToPosition(piecePosition);
+            if (moveResult == MoveFail) {
+                RestoreSelectedPiecePosition();
             }
-            RestoreSelectedPiecePosition();
+            if (selectedPieceFollowState == DoubleClick) {
+                ClearSelectedPiece();
+            }
+
+            selectedPieceFollowState = Inactive;
             break;
     }
 }
+
 
 
 void BoardRenderer::Render(const std::unique_ptr<sf::RenderWindow>& window) {
@@ -132,7 +154,7 @@ void BoardRenderer::RenderPieces(const std::unique_ptr<sf::RenderWindow>& window
             if (!sprite) continue;
 
             sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
-            if (selectedPieceFollowState == Active && selectedPiecePosition.has_value() && selectedPiecePosition.value().row == row && selectedPiecePosition.value().col == col) {
+            if (selectedPieceFollowState != Inactive && selectedPiecePosition.has_value() && selectedPiecePosition.value().row == row && selectedPiecePosition.value().col == col) {
                 sf::Vector2f vectorFloat{static_cast<float>(mousePos.x - TILE_SIZE/2),static_cast<float>(mousePos.y - TILE_SIZE/2)};
                 sprite->setPosition(vectorFloat);
             }
@@ -180,10 +202,14 @@ void BoardRenderer::SelectSquare(PiecePosition piecePosition) {
     highlightedSquares.Clear();
     if (piecePosition.OutOfBounds()) return;
 
+    if (selectedPiecePosition == piecePosition) {
+        selectedPieceFollowState = DoubleClick;
+        return;
+    }
+
     const Piece& piece = gameBoard->GetPiece(piecePosition);
     if (piece.type == None) {
-        selectedPiecePosition = std::nullopt;
-        selectedPieceFollowState = Inactive;
+        ClearSelectedPiece();
         return;
     }
 
@@ -255,26 +281,23 @@ void BoardRenderer::ClearMoveSprites() {
 }
 
 void BoardRenderer::MoveSelectedPiece(const PieceMove &move) {
-    std::cout << "Move" << std::endl;
     if (!selectedPiecePosition.has_value()) return;
 
-    std::cout << "A" << std::endl;
     switch (move.type) {
         case Standard:
-            std::cout << "Standard" << std::endl;
             pieceSprites[selectedPiecePosition->col][selectedPiecePosition->row] = nullptr;
             pieceSprites[move.Position.col][move.Position.row] = nullptr;
             gameBoard->MovePiece(selectedPiecePosition.value(), move.Position);
             LoadPieceSprite(move.Position);
-            selectedPiecePosition = std::nullopt;
-            selectedPieceFollowState = Inactive;
-            ClearMoveSprites();
             break;
         case ShortCastle:
             break;
         case LongCastle:
             break;
     }
+    ClearSelectedPiece();
+    ClearMoveSprites();
+    pieceMoveQuery.moveCount = 0;
 }
 
 

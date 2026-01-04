@@ -108,7 +108,7 @@ void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &mov
     int direction = piece.color == PieceColor::White ? 1 : -1;
 
     for (int i = 0; i < 2; i++) {
-        PiecePosition movePos(piecePosition.row + captureSquares[i][0]*direction,piecePosition.col + captureSquares[i][1]*direction);
+        PiecePosition movePos(piecePosition.row + captureSquares[i][1]*direction,piecePosition.col + captureSquares[i][0]*direction);
 
         if (movePos.OutOfBounds()) continue;
 
