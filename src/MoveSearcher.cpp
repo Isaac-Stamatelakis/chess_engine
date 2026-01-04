@@ -138,8 +138,8 @@ void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &mov
     }
 
     AddPawnPushMove(piece,piecePosition,moveQuery,gameBoard,1,idx, direction, moveType);
-    if (piece.moveState == PieceMoveState::NotMoved) {
-        AddPawnPushMove(piece,piecePosition,moveQuery,gameBoard,2,idx, direction, moveType);
+    if (piece.moveState == NotMoved && moveType != Promotion) {
+        AddPawnPushMove(piece,piecePosition,moveQuery,gameBoard,2,idx, direction, DoublePawnPush);
     }
 
     if (moveType != Promotion) { // Impossible to en passant promote
@@ -208,7 +208,7 @@ void MoveSearcher::TryAddEnPassantMove(const Piece &piece, PiecePosition piecePo
 
     PieceMoveHistory& lastMove = gameBoard->GetLastMove();
     Piece lastMovePiece = lastMove.piece;
-    if (lastMovePiece.type != Pawn || lastMove.piece.color == piece.color) return;
+    if (lastMovePiece.type != Pawn || lastMove.piece.color == piece.color || lastMove.move.type != DoublePawnPush) return;
 
     if (lastMove.move.position != adjacentPosition) return;
 

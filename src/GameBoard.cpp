@@ -66,6 +66,7 @@ void GameBoard::ExecuteMove(PieceMove move, PiecePosition piecePosition) {
     Piece movePiece = GetPiece(piecePosition);
     switch (move.type) {
         case Standard:
+        case DoublePawnPush:
             MovePiece(piecePosition, move.position);
             break;
         case EnPassant: {

@@ -87,6 +87,7 @@ struct PiecePosition {
 
 enum MoveType {
     Standard,
+    DoublePawnPush,
     ShortCastle,
     LongCastle,
     Promotion,
