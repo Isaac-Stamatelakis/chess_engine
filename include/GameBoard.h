@@ -62,11 +62,16 @@ struct PiecePosition {
         short newCol = col + other.col;
         return {newRow, newCol};
     }
+
+    bool operator==(const PiecePosition & piece_position) const {
+        return piece_position.row == row && piece_position.col == col;
+    };
 };
 
 enum MoveType {
     Standard,
-    Castle
+    ShortCastle,
+    LongCastle
 };
 struct PieceMove {
     MoveType type;
@@ -84,6 +89,7 @@ public:
     void LoadDefaultBoard();
     void ClearBoard();
     Piece GetPiece(PiecePosition position);
+    void MovePiece(PiecePosition from, PiecePosition to);
 
 private:
     void LoadPieceDeclarations(const std::vector<PieceDeclaration>& pieceDeclarations, PieceColor pieceColor, short row);

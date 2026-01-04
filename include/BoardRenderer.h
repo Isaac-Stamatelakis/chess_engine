@@ -88,6 +88,8 @@ private:
     SelectedPieceFollowState selectedPieceFollowState = Inactive;
     std::unique_ptr<GameBoard>& gameBoard;
     PieceMoveQuery pieceMoveQuery;
+    PieceColor viewColor;
+
     void LoadGrid();
     void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window);
     void RenderPieces(const std::unique_ptr<sf::RenderWindow>& window);
@@ -102,6 +104,8 @@ private:
     void LoadMoveSprites(PiecePosition position);
     void RestoreSelectedPiecePosition() const;
     void ClearMoveSprites();
+    void MoveSelectedPiece(const PieceMove& move);
+    void LoadPieceSprite(PiecePosition piecePosition);
 };
 
 

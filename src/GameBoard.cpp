@@ -52,6 +52,13 @@ Piece GameBoard::GetPiece(PiecePosition position) {
     return pieces[position.col][position.row];
 }
 
+void GameBoard::MovePiece(PiecePosition from, PiecePosition to) {
+    Piece currentPiece = GetPiece(from);
+    currentPiece.moveState = Moved;
+    pieces[to.col][to.row] = currentPiece;
+    pieces[from.col][from.row] = Piece{None};
+}
+
 void GameBoard::LoadPieceDeclarations(const std::vector<PieceDeclaration> &pieceDeclarations, PieceColor pieceColor, short row) {
     short col = 0;
     short placementRow = pieceColor == White ? row : GRID_SIZE-row-1;

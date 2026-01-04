@@ -4,6 +4,7 @@
 
 #include "../include/MoveSearcher.h"
 
+#include <iostream>
 #include <memory>
 
 void MoveSearcher::GetValidMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard) {
@@ -114,7 +115,7 @@ void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &mov
         const Piece& targetPiece = gameBoard->GetPiece(movePos);
 
         // Skip friendly pieces
-        if (targetPiece.type != PieceType::None && targetPiece.color == piece.color) continue;
+        if (targetPiece.type == PieceType::None || targetPiece.color == piece.color) continue;
 
         moveQuery.moves[idx++] = PieceMove{ Standard,movePos};
     }
@@ -125,7 +126,6 @@ void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &mov
     if (piece.moveState == PieceMoveState::NotMoved) {
         AddPawnPushMove(piece,piecePosition,moveQuery,gameBoard,2,idx, direction);
     }
-
 
     moveQuery.moveCount = idx;
 
@@ -165,17 +165,22 @@ void MoveSearcher::GenerateSlidingMoves(const Piece &piece, PiecePosition pieceP
 void MoveSearcher::AddPawnPushMove(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery,
     const std::unique_ptr<GameBoard> &gameBoard, int movement, int &idx, int direction) {
     PiecePosition movePosition(piecePosition.row + direction * movement, piecePosition.col);
+
     if (movePosition.OutOfBounds()) return;
 
     const Piece& targetPiece = gameBoard->GetPiece(movePosition);
     if (targetPiece.type != PieceType::None) return;
 
-    for (int i = 0; i < movement-1; i++) {
+
+    for (int i = 1; i < movement; i++) {
         PiecePosition betweenPosition(piecePosition.row + direction * i, piecePosition.col);
         if (betweenPosition.OutOfBounds()) return;
+
         const Piece& betweenPiece = gameBoard->GetPiece(betweenPosition);
+        std::cout<<betweenPiece.type<<std::endl;
         if (betweenPiece.type != PieceType::None) return;
     }
+    std::cout << movement << std::endl;
     moveQuery.moves[idx++] = PieceMove{ Standard,movePosition};
 }
 
