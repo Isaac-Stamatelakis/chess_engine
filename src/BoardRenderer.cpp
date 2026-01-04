@@ -290,8 +290,8 @@ void BoardRenderer::MoveSelectedPiece(const PieceMove &move) {
     if (!selectedPiecePosition.has_value()) return;
 
     gameBoard->ExecuteMove(move, selectedPiecePosition.value());
-    RenderMove(move);
-
+    //RenderMove(move);
+    LoadGameBoard();
     ClearSelectedPiece();
     ClearMoveSprites();
     pieceMoveQuery.moveCount = 0;
@@ -305,6 +305,9 @@ void BoardRenderer::RenderMove(const PieceMove &move) {
             pieceSprites[move.position.col][move.position.row] = nullptr;
             LoadPieceSprite(move.position, NoFlip);
             break;
+        case EnPassant:
+            break;
+
     }
 }
 

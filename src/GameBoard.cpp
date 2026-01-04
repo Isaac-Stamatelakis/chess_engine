@@ -63,15 +63,31 @@ void GameBoard::MovePiece(PiecePosition from, PiecePosition to) {
 }
 
 void GameBoard::ExecuteMove(PieceMove move, PiecePosition piecePosition) {
+    Piece movePiece = GetPiece(piecePosition);
     switch (move.type) {
         case Standard:
             MovePiece(piecePosition, move.position);
             break;
+        case EnPassant: {
+            MovePiece(piecePosition, move.position);
+            PiecePosition adjacentPawnPosition = move.position;
+            std::cout << adjacentPawnPosition.col << "," << adjacentPawnPosition.row << std::endl;
+            if (movePiece.color == Black) {
+                adjacentPawnPosition.row++;
+            } else {
+                adjacentPawnPosition.row--;
+            }
+            std::cout << adjacentPawnPosition.col << "," << adjacentPawnPosition.row << std::endl;
+            pieces[adjacentPawnPosition.col][adjacentPawnPosition.row] = {None};
+            break;
+        }
+
         case ShortCastle:
             break;
         case LongCastle:
             break;
     }
+    SetLastMove(move, movePiece);
 }
 
 void GameBoard::SetLastMove(PieceMove move, Piece piece) {

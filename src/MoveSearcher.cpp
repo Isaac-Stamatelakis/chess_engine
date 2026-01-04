@@ -183,14 +183,16 @@ void MoveSearcher::AddPawnPushMove(const Piece &piece, PiecePosition piecePositi
 }
 
 void MoveSearcher::TryAddEnPassantMove(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int &idx, int horizontalDirection, int verticalDirection) {
-    PiecePosition adjacentPosition(piecePosition.row+horizontalDirection, piecePosition.col);
+    PiecePosition adjacentPosition(piecePosition.row, piecePosition.col+horizontalDirection);
     if (adjacentPosition.OutOfBounds()) return;
 
     PieceMoveHistory& lastMove = gameBoard->GetLastMove();
     Piece lastMovePiece = lastMove.piece;
-    if (lastMovePiece.type != Pawn || lastMove.piece.color == piece.color || lastMove.move.position != adjacentPosition) return;
+    if (lastMovePiece.type != Pawn || lastMove.piece.color == piece.color) return;
 
-    PiecePosition movePosition(piecePosition.row+horizontalDirection, piecePosition.col+verticalDirection);
+    if (lastMove.move.position != adjacentPosition) return;
+
+    PiecePosition movePosition(piecePosition.row+verticalDirection, piecePosition.col+horizontalDirection);
     if (movePosition.OutOfBounds()) return;
 
     moveQuery.moves[idx++] = PieceMove{EnPassant,movePosition};
