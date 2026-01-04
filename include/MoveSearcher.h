@@ -31,7 +31,8 @@ private:
 
     static void GenerateSlidingMoves(const Piece& piece, PiecePosition piecePosition,PieceMoveQuery &moveQuery,const std::unique_ptr<GameBoard> &gameBoard,const int directions[][2], int directionCount);
 
-    static void AddPawnPushMove(const Piece& piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int movement, int& idx, int direction);
+    static void AddPawnPushMove(const Piece& piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int movement, int& idx, int direction, MoveType
+                                moveType);
     static void TryAddEnPassantMove(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int
                                     &idx, int horizontalDirection, int verticalDirection);
 };

@@ -71,14 +71,21 @@ void GameBoard::ExecuteMove(PieceMove move, PiecePosition piecePosition) {
         case EnPassant: {
             MovePiece(piecePosition, move.position);
             PiecePosition adjacentPawnPosition = move.position;
-            std::cout << adjacentPawnPosition.col << "," << adjacentPawnPosition.row << std::endl;
             if (movePiece.color == Black) {
                 adjacentPawnPosition.row++;
             } else {
                 adjacentPawnPosition.row--;
             }
-            std::cout << adjacentPawnPosition.col << "," << adjacentPawnPosition.row << std::endl;
             pieces[adjacentPawnPosition.col][adjacentPawnPosition.row] = {None};
+            break;
+        }
+        case Promotion: {
+            MovePiece(piecePosition, move.position);
+            Piece& piece = pieces[move.position.col][move.position.row];
+            if (move.promotion == None) {
+                move.promotion = Queen;
+            }
+            piece.type = move.promotion;
             break;
         }
 
