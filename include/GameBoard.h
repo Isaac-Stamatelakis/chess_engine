@@ -5,6 +5,7 @@
 #ifndef CHESSENGINE_GAMEBOARD_H
 #define CHESSENGINE_GAMEBOARD_H
 #include <array>
+#include <optional>
 #include <vector>
 
 static constexpr int GRID_SIZE = 8;
@@ -46,10 +47,6 @@ struct PiecePosition {
     short row;
     short col;
 
-    int ToIndex() const {
-        return row * GRID_SIZE + col;
-    }
-
     bool OutOfBounds() const {
         return row >= BOARD_SIZE || col >= BOARD_SIZE || row < 0 || col < 0;
     }
@@ -67,10 +64,15 @@ struct PiecePosition {
     }
 };
 
+enum MoveType {
+    Standard,
+    Castle
+};
 struct PieceMove {
-    Piece piece;
+    MoveType type;
     PiecePosition Position;
 };
+
 
 struct PieceDeclaration {
     PieceType type;
@@ -78,13 +80,14 @@ struct PieceDeclaration {
 
 class GameBoard {
 public:
-    Piece Pieces[BOARD_SIZE];
     PieceMove LastMove;
     void LoadDefaultBoard();
     void ClearBoard();
+    Piece GetPiece(PiecePosition position);
 
 private:
     void LoadPieceDeclarations(const std::vector<PieceDeclaration>& pieceDeclarations, PieceColor pieceColor, short row);
+    Piece pieces[GRID_SIZE][GRID_SIZE];
 };
 
 

@@ -4,46 +4,44 @@
 
 #include "../include/MoveSearcher.h"
 
-void MoveSearcher::GetValidMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard &gameBoard) const {
-    const int boardPosition = piecePosition.ToIndex();
-    const Piece& piece = gameBoard.Pieces[boardPosition];
+#include <memory>
+
+void MoveSearcher::GetValidMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard) const {
+    const Piece& piece = gameBoard->GetPiece(piecePosition);
 
     switch (piece.type) {
         case None:
             moveQuery.moveCount = 0;
             break;
         case King:
-            GetKingMoves(piecePosition, moveQuery, gameBoard);
+            GetKingMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
         case Queen:
-            GetQueenMoves(piecePosition, moveQuery, gameBoard);
+            GetQueenMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
         case Rook:
-            GetRookMoves(piecePosition, moveQuery, gameBoard);
+            GetRookMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
         case Knight:
-            GetKnightMoves(piecePosition, moveQuery, gameBoard);
+            GetKnightMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
         case Bishop:
-            GetBishopMoves(piecePosition, moveQuery, gameBoard);
+            GetBishopMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
         case Pawn:
-            GetPawnMoves(piecePosition, moveQuery, gameBoard);
+            GetPawnMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
     }
 }
 
-void MoveSearcher::GetKingMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,
-    const GameBoard &gameBoard) const {
-    const Piece& piece = gameBoard.Pieces[piecePosition.ToIndex()];
-
+void MoveSearcher::GetKingMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard,const Piece& piece) const {
     int idx = 0;
     for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
             if (dx == 0 && dy == 0) continue;
             PiecePosition movePosition(piecePosition.row + dx, piecePosition.col + dy);
             if (movePosition.OutOfBounds()) continue;
-            const Piece& otherPiece = gameBoard.Pieces[movePosition.ToIndex()];
+            const Piece& otherPiece = gameBoard->GetPiece(movePosition);
             if (otherPiece.type != PieceType::None && otherPiece.color == piece.color) continue;
             if (otherPiece.protectionState == PieceProtectionState::Protected) continue;
             moveQuery.moves[idx] = movePosition;
@@ -55,41 +53,33 @@ void MoveSearcher::GetKingMoves(PiecePosition piecePosition, PieceMoveQuery &mov
     // TODO Castling
 }
 
-void MoveSearcher::GetQueenMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,
-    const GameBoard &gameBoard) const {
+void MoveSearcher::GetQueenMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const {
     const int directions[8][2] = {
         {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // straight lines
         {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // diagonals
     };
-    const Piece& piece = gameBoard.Pieces[piecePosition.ToIndex()];
     GenerateSlidingMoves(piece, piecePosition, moveQuery, gameBoard, directions, 8);
 }
 
-void MoveSearcher::GetRookMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,
-    const GameBoard &gameBoard) const {
+void MoveSearcher::GetRookMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const {
     const int directions[4][2] = {
         {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
-    const Piece& piece = gameBoard.Pieces[piecePosition.ToIndex()];
     GenerateSlidingMoves(piece, piecePosition, moveQuery, gameBoard, directions, 4);
 }
 
-void MoveSearcher::GetKnightMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,
-    const GameBoard &gameBoard) const {
+void MoveSearcher::GetKnightMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const {
     const int knightOffsets[8][2] = {
         {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
         {-2,-1}, {-1,-2}, {1,-2}, {2,-1}
     };
 
-    const Piece& piece = gameBoard.Pieces[piecePosition.ToIndex()];
     int idx = 0;
     for (int i = 0; i < 8; i++) {
         PiecePosition movePos(piecePosition.row + knightOffsets[i][0],piecePosition.col + knightOffsets[i][1]);
 
         if (movePos.OutOfBounds()) continue;
-
-        int targetIdx = movePos.ToIndex();
-        const Piece& targetPiece = gameBoard.Pieces[targetIdx];
+        const Piece& targetPiece = gameBoard->GetPiece(movePos);
 
         // Skip friendly pieces
         if (targetPiece.type != PieceType::None && targetPiece.color == piece.color) continue;
@@ -101,22 +91,19 @@ void MoveSearcher::GetKnightMoves(PiecePosition piecePosition, PieceMoveQuery &m
 
 }
 
-void MoveSearcher::GetBishopMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,
-    const GameBoard &gameBoard) const {
+void MoveSearcher::GetBishopMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery,const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const {
         const int directions[4][2] = {
             {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // diagonals
         };
-        const Piece& piece = gameBoard.Pieces[piecePosition.ToIndex()];
         GenerateSlidingMoves(piece, piecePosition, moveQuery, gameBoard, directions, 4);
 }
 
-void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard &gameBoard) const {
+void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const {
     const int captureSquares[2][2] = {
         {1, 1}, {-1, 1}
     };
-    const Piece& piece = gameBoard.Pieces[piecePosition.ToIndex()];
-    int idx = 0;
 
+    int idx = 0;
     int direction = piece.color == PieceColor::White ? 1 : -1;
 
     for (int i = 0; i < 2; i++) {
@@ -124,8 +111,7 @@ void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &mov
 
         if (movePos.OutOfBounds()) continue;
 
-        int targetIdx = movePos.ToIndex();
-        const Piece& targetPiece = gameBoard.Pieces[targetIdx];
+        const Piece& targetPiece = gameBoard->GetPiece(movePos);
 
         // Skip friendly pieces
         if (targetPiece.type != PieceType::None && targetPiece.color == piece.color) continue;
@@ -145,7 +131,7 @@ void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &mov
 
 }
 
-void MoveSearcher::GenerateSlidingMoves(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery,const GameBoard &gameBoard, const int directions[][2], int directionCount) const {
+void MoveSearcher::GenerateSlidingMoves(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery,const std::unique_ptr<GameBoard> &gameBoard, const int directions[][2], int directionCount) const {
     int idx = 0;
     for (int d = 0; d < 8; d++) {
         int dx = directions[d][0];
@@ -159,8 +145,7 @@ void MoveSearcher::GenerateSlidingMoves(const Piece &piece, PiecePosition pieceP
 
             if (currentPos.OutOfBounds()) break;
 
-            int targetIdx = currentPos.ToIndex();
-            const Piece& targetPiece = gameBoard.Pieces[targetIdx];
+            const Piece& targetPiece = gameBoard->GetPiece(currentPos);
 
             // Same color piece
             if (targetPiece.type != PieceType::None && targetPiece.color == piece.color)
@@ -177,19 +162,18 @@ void MoveSearcher::GenerateSlidingMoves(const Piece &piece, PiecePosition pieceP
     moveQuery.moveCount = idx;
 }
 
-void MoveSearcher::AddPawnPushMove(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard &gameBoard, int movement, int& idx, int direction) const {
+void MoveSearcher::AddPawnPushMove(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery,
+    const std::unique_ptr<GameBoard> &gameBoard, int movement, int &idx, int direction) const {
     PiecePosition movePosition(piecePosition.row + direction * movement, piecePosition.col);
     if (movePosition.OutOfBounds()) return;
 
-    int targetIdx = movePosition.ToIndex();
-    const Piece& targetPiece = gameBoard.Pieces[targetIdx];
+    const Piece& targetPiece = gameBoard->GetPiece(movePosition);
     if (targetPiece.type != PieceType::None) return;
 
     for (int i = 0; i < movement-1; i++) {
         PiecePosition betweenPosition(piecePosition.row + direction * i, piecePosition.col);
         if (betweenPosition.OutOfBounds()) return;
-        int targetIdx = betweenPosition.ToIndex();
-        const Piece& betweenPiece = gameBoard.Pieces[targetIdx];
+        const Piece& betweenPiece = gameBoard->GetPiece(betweenPosition);
         if (betweenPiece.type != PieceType::None) return;
     }
     moveQuery.moves[idx++] = movePosition;

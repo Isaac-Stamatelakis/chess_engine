@@ -35,11 +35,21 @@ void GameBoard::LoadDefaultBoard() {
 }
 
 void GameBoard::ClearBoard() {
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        Piece& piece = Pieces[i];
-        piece.type = PieceType::None;
-        piece.moveState = PieceMoveState::NotMoved;
+    for (auto& row : pieces)
+    {
+        for (Piece& piece : row)
+        {
+            piece.type = None;
+            piece.moveState = NotMoved;
+        }
     }
+    for (int i = 0; i < BOARD_SIZE; i++) {
+
+    }
+}
+
+Piece GameBoard::GetPiece(PiecePosition position) {
+    return pieces[position.col][position.row];
 }
 
 void GameBoard::LoadPieceDeclarations(const std::vector<PieceDeclaration> &pieceDeclarations, PieceColor pieceColor, short row) {
@@ -52,8 +62,7 @@ void GameBoard::LoadPieceDeclarations(const std::vector<PieceDeclaration> &piece
         }
 
         Piece piece{declaration.type,pieceColor,NotMoved};
-        const int idx = piecePosition.ToIndex();
-        Pieces[idx] = piece;
+        pieces[piecePosition.col][piecePosition.row] = piece;
         col++;
     }
 }

@@ -39,6 +39,29 @@ struct RenderTextures {
     sf::Texture captureTexture;
 };
 
+struct HighlightedSquares {
+    std::array<std::bitset<GRID_SIZE>, GRID_SIZE> bitSetList; // all bits initialized to 0
+
+    bool IsHighlighted(PiecePosition piecePosition) {
+        if (piecePosition.OutOfBounds()) return false;
+        return bitSetList[piecePosition.row].test(piecePosition.col);
+    }
+
+    void Highlight(PiecePosition piecePosition) {
+         bitSetList[piecePosition.row].set(piecePosition.col);
+    }
+
+    void UnHighlight(PiecePosition piecePosition) {
+        bitSetList[piecePosition.row].reset(piecePosition.col);
+    }
+
+    void Clear() {
+        for (std::bitset<GRID_SIZE>& bitSet : bitSetList) {
+            bitSet.reset();
+        }
+    }
+};
+
 enum SelectedPieceFollowState {
     Active,
     Inactive
@@ -47,19 +70,20 @@ static constexpr int TILE_SIZE = 60;
 
 class BoardRenderer {
 public:
-    BoardRenderer();
+    BoardRenderer(std::unique_ptr<GameBoard> &gameboard, PieceColor viewColor);
+
     void Render(const std::unique_ptr<sf::RenderWindow>& window);
-    void LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor);
     void OnMouseDown(sf::Mouse::Button button, sf::Vector2i mousePosition);
     void OnMouseRelease(sf::Mouse::Button button, sf::Vector2i mousePosition);
 private:
     sf::RectangleShape squares[GRID_SIZE][GRID_SIZE];
     std::unique_ptr<sf::Sprite> pieceSprites[GRID_SIZE][GRID_SIZE];
     std::vector<std::unique_ptr<sf::Sprite>> movePositionSprites;
-    std::bitset<GRID_SIZE*GRID_SIZE> highlightedSquares;
+    HighlightedSquares highlightedSquares;
     RenderTextures textures;
     std::optional<PiecePosition> selectedPiecePosition;
     SelectedPieceFollowState selectedPieceFollowState = Inactive;
+    std::unique_ptr<GameBoard>& gameBoard;
     void LoadGrid();
     void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window);
     void RenderPieces(const std::unique_ptr<sf::RenderWindow>& window);
@@ -69,10 +93,10 @@ private:
     void SelectSquare(PiecePosition piecePosition);
     void HighlightSquare(PiecePosition piecePosition);
 
+    void LoadGameBoard(PieceColor viewColor);
     sf::Texture LoadTexture(const std::string &path);
     void SetMoveSprites(PiecePosition position);
-    void RestoreSelectedPiecePosition();
-    int GetSelectedPiecePositionIndex();
+    void RestoreSelectedPiecePosition() const;
 };
 
 

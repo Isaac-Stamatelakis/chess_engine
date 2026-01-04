@@ -12,8 +12,7 @@ int main() {
     std::unique_ptr<sf::RenderWindow> window = std::make_unique<sf::RenderWindow>(sf::VideoMode({GRID_SIZE*TILE_SIZE, GRID_SIZE*TILE_SIZE}), "Chess");
     window->setFramerateLimit(144);
 
-    std::unique_ptr<BoardRenderer> boardRenderer = std::make_unique<BoardRenderer>();
-    boardRenderer->LoadGameBoard(gameBoard, Black);
+    std::unique_ptr<BoardRenderer> boardRenderer = std::make_unique<BoardRenderer>(gameBoard, Black);
 
     while (window->isOpen())
     {

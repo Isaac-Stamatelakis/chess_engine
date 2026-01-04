@@ -4,6 +4,8 @@
 
 #ifndef CHESSENGINE_MOVESEARCHER_H
 #define CHESSENGINE_MOVESEARCHER_H
+#include <memory>
+
 #include "GameBoard.h"
 
 struct PieceMoveQuery {
@@ -13,17 +15,17 @@ struct PieceMoveQuery {
 
 class MoveSearcher {
 public:
-    void GetValidMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
+    void GetValidMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard) const;
 
 private:
-    void GetKingMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
-    void GetQueenMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
-    void GetRookMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
-    void GetKnightMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
-    void GetBishopMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
-    void GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard& gameBoard) const;
-    void GenerateSlidingMoves(const Piece& piece, PiecePosition piecePosition,PieceMoveQuery &moveQuery, const GameBoard &gameBoard,const int directions[][2], int directionCount) const;
-    void AddPawnPushMove(const Piece& piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const GameBoard &gameBoard, int movement, int& idx, int direction) const;
+    void GetKingMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const;
+    void GetQueenMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const;
+    void GetRookMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const;
+    void GetKnightMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const;
+    void GetBishopMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const;
+    void GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) const;
+    void GenerateSlidingMoves(const Piece& piece, PiecePosition piecePosition,PieceMoveQuery &moveQuery,const std::unique_ptr<GameBoard> &gameBoard,const int directions[][2], int directionCount) const;
+    void AddPawnPushMove(const Piece& piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int movement, int& idx, int direction) const;
 };
 
 

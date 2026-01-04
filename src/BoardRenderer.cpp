@@ -10,17 +10,19 @@
 #include "SFML/Graphics/Sprite.hpp"
 #include "SFML/Graphics/Texture.hpp"
 
-BoardRenderer::BoardRenderer() {
+BoardRenderer::BoardRenderer(std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor) : gameBoard(gameboard) {
     LoadGrid();
     LoadTextures();
+    LoadGameBoard(viewColor);
 }
 
-void BoardRenderer::LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor) {
+void BoardRenderer::LoadGameBoard(PieceColor viewColor) {
     for (int row = 0; row < GRID_SIZE; ++row) {
         for (int col = 0; col < GRID_SIZE; ++col) {
-            pieceSprites[row][col] = nullptr;
+            PiecePosition piecePosition(row, col);
+            pieceSprites[col][row] = nullptr;
 
-            const Piece& piece = gameboard->Pieces[row + col*GRID_SIZE];
+            const Piece& piece = gameBoard->GetPiece(piecePosition);
             PieceTextureKey pieceTextureKey{piece.type,piece.color};
             if (!textures.pieceTextures.contains(pieceTextureKey)) continue;
 
@@ -30,21 +32,21 @@ void BoardRenderer::LoadGameBoard(const std::unique_ptr<GameBoard>& gameboard, P
             int viewRow = row;
             int viewCol = col;
             if (viewColor == White) {
-                viewCol = GRID_SIZE - viewCol - 1;
+                viewRow = GRID_SIZE - row - 1;
             }
 
-            sf::Vector2f position {static_cast<float>(viewRow*TILE_SIZE),static_cast<float>(viewCol*TILE_SIZE)};
+            sf::Vector2f position {static_cast<float>(viewCol*TILE_SIZE),static_cast<float>(viewRow*TILE_SIZE)};
 
             sprite.get()->setPosition(position);
-            pieceSprites[row][col] = std::move(sprite);
+            pieceSprites[col][row] = std::move(sprite);
         }
     }
 }
 
 void BoardRenderer::OnMouseDown(sf::Mouse::Button button, sf::Vector2i mousePosition) {
-    short px = mousePosition.x / TILE_SIZE;
-    short py = mousePosition.y / TILE_SIZE;
-    PiecePosition piecePosition {px,py};
+    short col = mousePosition.x / TILE_SIZE;
+    short row = mousePosition.y / TILE_SIZE;
+    PiecePosition piecePosition {row,col};
     if (piecePosition.OutOfBounds()) return;
 
     switch (button) {
@@ -80,49 +82,43 @@ void BoardRenderer::RenderGrid(const std::unique_ptr<sf::RenderWindow>& window) 
     sf::Color selectedColor(246, 246, 105);    // soft yellow (selected square)
     sf::Color highlightedColor(255, 80, 80);   // soft red (valid moves / attacks)
 
-
-    int selectedPositionIndex = GetSelectedPiecePositionIndex();
-
-    for (int x = 0; x < GRID_SIZE; ++x)
+    for (int row = 0; row < GRID_SIZE; ++row)
     {
-        for (int y = 0; y < GRID_SIZE; ++y)
+        for (int col = 0; col < GRID_SIZE; ++col)
         {
+            PiecePosition piecePosition(row, col);
+
             sf::Color color;
-            if ((x + y) % 2 == 0) {
+            if ((row + col) % 2 == 0) {
                 color = lightColor;
             }
             else {
                 color = darkColor;
             }
 
-            int idx = x *GRID_SIZE + y;
-            if (idx == selectedPositionIndex) {
-                squares[y][x].setFillColor(selectedColor);
-            } else if (highlightedSquares.test(idx)) {
-                squares[y][x].setFillColor(highlightedColor*color);
+            if (selectedPiecePosition.has_value() && selectedPiecePosition.value().row == piecePosition.row && selectedPiecePosition.value().col == piecePosition.col) {
+                squares[col][row].setFillColor(selectedColor);
+            } else if (highlightedSquares.IsHighlighted(piecePosition)) {
+                squares[col][row].setFillColor(highlightedColor*color);
             } else {
-                squares[y][x].setFillColor(color);
+                squares[col][row].setFillColor(color);
             }
-            window->draw(squares[x][y]);
+            window->draw(squares[row][col]);
         }
     }
 }
 
 void BoardRenderer::RenderPieces(const std::unique_ptr<sf::RenderWindow>& window) {
-    int selectedPositionIndex = GetSelectedPiecePositionIndex();
     for (int row = 0; row < GRID_SIZE; ++row) {
         for (int col = 0; col < GRID_SIZE; ++col) {
-            if (!pieceSprites[row][col]) continue;
-
-            int idx = row * GRID_SIZE + col;
-            const std::unique_ptr<sf::Sprite>& sprite = pieceSprites[row][col];
+            const std::unique_ptr<sf::Sprite>& sprite = pieceSprites[col][row];
+            if (!sprite) continue;
 
             sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
-            if (idx == selectedPositionIndex && selectedPieceFollowState == Active) {
+            if (selectedPieceFollowState == Active && selectedPiecePosition.has_value() && selectedPiecePosition.value().row == row && selectedPiecePosition.value().col == col) {
                 sf::Vector2f vectorFloat{static_cast<float>(mousePos.x - TILE_SIZE/2),static_cast<float>(mousePos.y - TILE_SIZE/2)};
                 sprite->setPosition(vectorFloat);
             }
-
             window->draw(*sprite);
         }
     }
@@ -164,21 +160,28 @@ void BoardRenderer::LoadPieceTexture(PieceType piece, PieceColor pieceColor, con
 }
 
 void BoardRenderer::SelectSquare(PiecePosition piecePosition) {
-    highlightedSquares.reset();
-    int idx = piecePosition.ToIndex();
+    highlightedSquares.Clear();
+    if (piecePosition.OutOfBounds()) return;
+
+    const Piece& piece = gameBoard->GetPiece(piecePosition);
+    if (piece.type == None) {
+        selectedPiecePosition = std::nullopt;
+        selectedPieceFollowState = Inactive;
+        return;
+    }
+
+
     selectedPieceFollowState = Active;
-    int selectedPositionIndex = GetSelectedPiecePositionIndex();
-    if (idx == selectedPositionIndex) return;
     selectedPiecePosition = piecePosition;
 }
 
 void BoardRenderer::HighlightSquare(PiecePosition piecePosition) {
     selectedPiecePosition = std::nullopt;
-    int idx = piecePosition.ToIndex();
-    if (highlightedSquares.test(idx)) {
-        highlightedSquares.reset(idx);
+
+    if (highlightedSquares.IsHighlighted(piecePosition)) {
+        highlightedSquares.UnHighlight(piecePosition);
     } else {
-        highlightedSquares.set(idx);
+        highlightedSquares.Highlight(piecePosition);
     }
 
 }
@@ -196,35 +199,27 @@ void BoardRenderer::SetMoveSprites(PiecePosition position) {
 
 }
 
-void BoardRenderer::RestoreSelectedPiecePosition() {
+void BoardRenderer::RestoreSelectedPiecePosition() const {
     if (!selectedPiecePosition.has_value()) return;
 
     PiecePosition piecePosition = selectedPiecePosition.value();
     if (piecePosition.OutOfBounds()) return;
 
-    const std::unique_ptr<sf::Sprite>& sprite = pieceSprites[piecePosition.row][piecePosition.col];
+    const std::unique_ptr<sf::Sprite>& sprite = pieceSprites[piecePosition.col][piecePosition.row];
     if (!sprite) return;
 
-    sf::Vector2f position {static_cast<float>(piecePosition.row*TILE_SIZE),static_cast<float>(piecePosition.col*TILE_SIZE)};
+    sf::Vector2f position {static_cast<float>(piecePosition.col*TILE_SIZE),static_cast<float>(piecePosition.row*TILE_SIZE)};
     sprite.get()->setPosition(position);
 }
 
-int BoardRenderer::GetSelectedPiecePositionIndex() {
-    if (selectedPiecePosition.has_value()) {
-        return selectedPiecePosition.value().ToIndex();
-    }
-    return  -1;
-}
-
-
 void BoardRenderer::LoadGrid() {
-    for (int x = 0; x < GRID_SIZE; ++x)
+    for (int col = 0; col < GRID_SIZE; ++col)
     {
-        for (int y = 0; y < GRID_SIZE; ++y)
+        for (int row = 0; row < GRID_SIZE; ++row)
         {
-            squares[y][x].setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-            const sf::Vector2f location(x * TILE_SIZE, y * TILE_SIZE);
-            squares[y][x].setPosition(location);
+            squares[col][row].setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
+            const sf::Vector2f location(col * TILE_SIZE, row * TILE_SIZE);
+            squares[col][row].setPosition(location);
         }
     }
 }
