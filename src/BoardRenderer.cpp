@@ -312,6 +312,7 @@ void BoardRenderer::RenderMove(const PieceMove &move) {
 }
 
 
+
 void BoardRenderer::LoadGrid() {
     for (int col = 0; col < GRID_SIZE; ++col)
     {

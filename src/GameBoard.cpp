@@ -88,11 +88,23 @@ void GameBoard::ExecuteMove(PieceMove move, PiecePosition piecePosition) {
             piece.type = move.promotion;
             break;
         }
+        case ShortCastle: {
+            MovePiece(piecePosition, move.position);
+            PiecePosition rookInitialPosition = PiecePosition(move.position.row, move.position.col-1);
+            pieces[rookInitialPosition.col][rookInitialPosition.row] = {None};
+            PiecePosition rookEndPosition = PiecePosition(move.position.row, move.position.col+1);
+            pieces[rookEndPosition.col][rookEndPosition.row] = {Rook,movePiece.color,Moved};
+        }
+            break;
+        case LongCastle: {
+            MovePiece(piecePosition, move.position);
+            PiecePosition rookInitialPosition = PiecePosition(move.position.row, move.position.col+2);
+            pieces[rookInitialPosition.col][rookInitialPosition.row] = {None};
+            PiecePosition rookEndPosition = PiecePosition(move.position.row, move.position.col-1);
+            pieces[rookEndPosition.col][rookEndPosition.row] = {Rook,movePiece.color,Moved};
+            break;
+        }
 
-        case ShortCastle:
-            break;
-        case LongCastle:
-            break;
     }
     SetLastMove(move, movePiece);
 }
@@ -118,4 +130,16 @@ void GameBoard::LoadPieceDeclarations(const std::vector<PieceDeclaration> &piece
         pieces[piecePosition.col][piecePosition.row] = piece;
         col++;
     }
+}
+
+bool GameBoard::RowOccupied(PiecePosition initialPosition, int direction, int checkCount) {
+    for (int i = 1; i <= checkCount; i++) {
+        PiecePosition position(initialPosition.row,initialPosition.col+direction*i);
+        if (position.OutOfBounds()) return true;
+
+        Piece piece = GetPiece(position);
+        std::cout << piece.type << std::endl;
+        if (piece.type != None) return true;
+    }
+    return false;
 }

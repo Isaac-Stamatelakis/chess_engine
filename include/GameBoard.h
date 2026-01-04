@@ -32,7 +32,7 @@ enum PieceMoveState {
     Moved
 };
 
-enum PieceProtectionState {
+enum OccuputationState {
     NotProtected,
     Protected,
 };
@@ -41,7 +41,7 @@ struct Piece {
     PieceType type;
     PieceColor color;
     PieceMoveState moveState;
-    PieceProtectionState protectionState;
+    OccuputationState protectionState;
 };
 
 enum Axis {
@@ -118,6 +118,8 @@ public:
     void ExecuteMove(PieceMove move, PiecePosition piecePosition);
     void SetLastMove(PieceMove move, Piece piece);
     PieceMoveHistory& GetLastMove();
+    bool RowOccupied(PiecePosition initialPosition, int direction, int checkCount);
+
 
 private:
     void LoadPieceDeclarations(const std::vector<PieceDeclaration>& pieceDeclarations, PieceColor pieceColor, short row);

@@ -35,6 +35,9 @@ private:
                                 moveType);
     static void TryAddEnPassantMove(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int
                                     &idx, int horizontalDirection, int verticalDirection);
+
+    static void TryAddCastle(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int
+                             &idx, int castleDirection, int castleLength, MoveType moveType);
 };
 
 
