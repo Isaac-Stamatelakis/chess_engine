@@ -5,6 +5,7 @@
 #ifndef CHESSENGINE_GAMEBOARD_H
 #define CHESSENGINE_GAMEBOARD_H
 #include <array>
+#include <iosfwd>
 #include <optional>
 #include <vector>
 
@@ -43,6 +44,11 @@ struct Piece {
     PieceProtectionState protectionState;
 };
 
+enum Axis {
+    Horizontal,
+    Vertical
+};
+
 struct PiecePosition {
     short row;
     short col;
@@ -66,18 +72,38 @@ struct PiecePosition {
     bool operator==(const PiecePosition & piece_position) const {
         return piece_position.row == row && piece_position.col == col;
     };
+
+    void InvertAxis(Axis axis) {
+        switch (axis) {
+            case Horizontal:
+                col = GRID_SIZE - col - 1;
+                break;
+            case Vertical:
+                row = GRID_SIZE - row - 1;
+                break;
+        }
+    }
 };
 
 enum MoveType {
     Standard,
     ShortCastle,
-    LongCastle
-};
-struct PieceMove {
-    MoveType type;
-    PiecePosition Position;
+    LongCastle,
+    Promotion,
+    EnPassant
 };
 
+struct PieceMove {
+    MoveType type;
+    PiecePosition position;
+    PieceType promotion;
+};
+
+
+struct PieceMoveHistory {
+    PieceMove move;
+    Piece piece;
+};
 
 struct PieceDeclaration {
     PieceType type;
@@ -85,15 +111,20 @@ struct PieceDeclaration {
 
 class GameBoard {
 public:
-    PieceMove LastMove;
     void LoadDefaultBoard();
     void ClearBoard();
     Piece GetPiece(PiecePosition position);
     void MovePiece(PiecePosition from, PiecePosition to);
+    void ExecuteMove(PieceMove move, PiecePosition piecePosition);
+    void SetLastMove(PieceMove move, Piece piece);
+    PieceMoveHistory& GetLastMove();
 
 private:
     void LoadPieceDeclarations(const std::vector<PieceDeclaration>& pieceDeclarations, PieceColor pieceColor, short row);
     Piece pieces[GRID_SIZE][GRID_SIZE];
+
+    PieceMoveHistory pieceMoveHistory;
+
 };
 
 

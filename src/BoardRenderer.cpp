@@ -13,35 +13,40 @@
 BoardRenderer::BoardRenderer(std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor) : gameBoard(gameboard), viewColor(viewColor) {
     LoadGrid();
     LoadTextures();
-    LoadGameBoard(viewColor);
+    LoadGameBoard();
 }
 
-void BoardRenderer::LoadGameBoard(PieceColor viewColor) {
+void BoardRenderer::LoadGameBoard() {
+    for (int row = 0; row < GRID_SIZE; row++) {
+        for (int col = 0; col < GRID_SIZE; col++) {
+            pieceSprites[col][row] = nullptr;
+        }
+    }
+
     for (int row = 0; row < GRID_SIZE; ++row) {
         for (int col = 0; col < GRID_SIZE; ++col) {
-            pieceSprites[col][row] = nullptr;
             PiecePosition piecePosition(row, col);
-            LoadPieceSprite(piecePosition);
+            LoadPieceSprite(piecePosition, FlipIfWhite);
         }
     }
 }
 
 
-void BoardRenderer::LoadPieceSprite(PiecePosition piecePosition) {
+void BoardRenderer::LoadPieceSprite(PiecePosition piecePosition, PieceLoadFlipMode flipMode) {
     const Piece& piece = gameBoard->GetPiece(piecePosition);
+
+    if (flipMode == FlipIfWhite && viewColor == White) {
+        piecePosition.InvertAxis(Vertical);
+    }
     PieceTextureKey pieceTextureKey{piece.type,piece.color};
     if (!textures.pieceTextures.contains(pieceTextureKey)) return;;
 
     sf::Texture& texture = textures.pieceTextures[pieceTextureKey];
     std::unique_ptr<sf::Sprite> sprite = std::make_unique<sf::Sprite>(texture);
 
-    int viewRow = piecePosition.row;
-    int viewCol = piecePosition.col;
-    if (viewColor == White) {
-        viewRow = GRID_SIZE - viewRow - 1;
-    }
 
-    sf::Vector2f position {static_cast<float>(viewCol*TILE_SIZE),static_cast<float>(viewRow*TILE_SIZE)};
+
+    sf::Vector2f position {static_cast<float>(piecePosition.col*TILE_SIZE),static_cast<float>(piecePosition.row*TILE_SIZE)};
 
     sprite.get()->setPosition(position);
     pieceSprites[piecePosition.col][piecePosition.row] = std::move(sprite);
@@ -53,10 +58,11 @@ void BoardRenderer::ClearSelectedPiece() {
     ClearMoveSprites();
 }
 
+
 PieceMoveResult BoardRenderer::TryMoveToPosition(PiecePosition piecePosition) {
     for (int i = 0; i < pieceMoveQuery.moveCount; i++) {
         const PieceMove& move = pieceMoveQuery.moves[i];
-        if (move.Position == piecePosition) {
+        if (move.position == piecePosition) {
             MoveSelectedPiece(move);
             return MoveSuccess;
         }
@@ -247,12 +253,12 @@ void BoardRenderer::LoadMoveSprites(PiecePosition position) {
     for (int i = 0; i < pieceMoveQuery.moveCount; i++) {
         PieceMove pieceMove = pieceMoveQuery.moves[i];
 
-        const Piece& piece = gameBoard->GetPiece(pieceMove.Position);
+        const Piece& piece = gameBoard->GetPiece(pieceMove.position);
         const sf::Texture& texture = piece.type == None ? textures.moveTexture : textures.captureTexture;
 
         std::unique_ptr<sf::Sprite> sprite = std::make_unique<sf::Sprite>(texture);
-        float rowPosition = TILE_SIZE * pieceMove.Position.row;
-        float columnPosition = TILE_SIZE * pieceMove.Position.col;
+        float rowPosition = TILE_SIZE * pieceMove.position.row;
+        float columnPosition = TILE_SIZE * pieceMove.position.col;
 
         sf::Vector2f position{columnPosition, rowPosition};
         sprite->setPosition(position);
@@ -283,23 +289,24 @@ void BoardRenderer::ClearMoveSprites() {
 void BoardRenderer::MoveSelectedPiece(const PieceMove &move) {
     if (!selectedPiecePosition.has_value()) return;
 
-    switch (move.type) {
-        case Standard:
-            pieceSprites[selectedPiecePosition->col][selectedPiecePosition->row] = nullptr;
-            pieceSprites[move.Position.col][move.Position.row] = nullptr;
-            gameBoard->MovePiece(selectedPiecePosition.value(), move.Position);
-            LoadPieceSprite(move.Position);
-            break;
-        case ShortCastle:
-            break;
-        case LongCastle:
-            break;
-    }
+    gameBoard->ExecuteMove(move, selectedPiecePosition.value());
+    RenderMove(move);
+
     ClearSelectedPiece();
     ClearMoveSprites();
     pieceMoveQuery.moveCount = 0;
 }
 
+
+void BoardRenderer::RenderMove(const PieceMove &move) {
+    switch (move.type) {
+        case Standard:
+            pieceSprites[selectedPiecePosition->col][selectedPiecePosition->row] = nullptr;
+            pieceSprites[move.position.col][move.position.row] = nullptr;
+            LoadPieceSprite(move.position, NoFlip);
+            break;
+    }
+}
 
 
 void BoardRenderer::LoadGrid() {

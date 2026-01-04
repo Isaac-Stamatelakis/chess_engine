@@ -75,6 +75,11 @@ enum PieceMoveResult {
     MoveSuccess,
     MoveFail,
 };
+
+enum PieceLoadFlipMode {
+    NoFlip,
+    FlipIfWhite
+};
 static constexpr int TILE_SIZE = 60;
 
 class BoardRenderer {
@@ -105,14 +110,15 @@ private:
     void SelectSquare(PiecePosition piecePosition);
     void HighlightSquare(PiecePosition piecePosition);
 
-    void LoadGameBoard(PieceColor viewColor);
+    void LoadGameBoard();
     sf::Texture LoadTexture(const std::string &path);
     void LoadMoveSprites(PiecePosition position);
     void RestoreSelectedPiecePosition() const;
     void ClearMoveSprites();
     void MoveSelectedPiece(const PieceMove& move);
-    void LoadPieceSprite(PiecePosition piecePosition);
+    void LoadPieceSprite(PiecePosition piecePosition, PieceLoadFlipMode flipMode);
     void ClearSelectedPiece();
+    void RenderMove(const PieceMove &move);
 
     PieceMoveResult TryMoveToPosition(PiecePosition piecePosition);
 };

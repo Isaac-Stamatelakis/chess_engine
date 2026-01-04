@@ -4,6 +4,8 @@
 
 #include "../include/GameBoard.h"
 
+#include <iostream>
+#include <ostream>
 #include <stdexcept>
 
 
@@ -54,9 +56,30 @@ Piece GameBoard::GetPiece(PiecePosition position) {
 
 void GameBoard::MovePiece(PiecePosition from, PiecePosition to) {
     Piece currentPiece = GetPiece(from);
+    //std::cout << currentPiece.color << "," + currentPiece.type << std::endl;
     currentPiece.moveState = Moved;
     pieces[to.col][to.row] = currentPiece;
     pieces[from.col][from.row] = Piece{None};
+}
+
+void GameBoard::ExecuteMove(PieceMove move, PiecePosition piecePosition) {
+    switch (move.type) {
+        case Standard:
+            MovePiece(piecePosition, move.position);
+            break;
+        case ShortCastle:
+            break;
+        case LongCastle:
+            break;
+    }
+}
+
+void GameBoard::SetLastMove(PieceMove move, Piece piece) {
+    pieceMoveHistory = {move,piece};
+}
+
+PieceMoveHistory & GameBoard::GetLastMove() {
+    return pieceMoveHistory;
 }
 
 void GameBoard::LoadPieceDeclarations(const std::vector<PieceDeclaration> &pieceDeclarations, PieceColor pieceColor, short row) {
