@@ -34,6 +34,10 @@ void GameBoard::LoadDefaultBoard() {
 
     LoadPieceDeclarations(pieceDeclarations,Black, 0);
     LoadPieceDeclarations(pawns,Black, 1);
+
+    Piece emptyPiece = {None,Black}; // Lets white go first
+    PieceMove emptyMove = {};
+    pieceMoveHistory = {emptyMove,emptyPiece};
 }
 
 void GameBoard::ClearBoard() {
@@ -56,7 +60,6 @@ Piece GameBoard::GetPiece(PiecePosition position) {
 
 void GameBoard::MovePiece(PiecePosition from, PiecePosition to) {
     Piece currentPiece = GetPiece(from);
-    //std::cout << currentPiece.color << "," + currentPiece.type << std::endl;
     currentPiece.moveState = Moved;
     pieces[to.col][to.row] = currentPiece;
     pieces[from.col][from.row] = Piece{None};
@@ -91,17 +94,17 @@ void GameBoard::ExecuteMove(PieceMove move, PiecePosition piecePosition) {
         }
         case ShortCastle: {
             MovePiece(piecePosition, move.position);
-            PiecePosition rookInitialPosition = PiecePosition(move.position.row, move.position.col-1);
+            auto rookInitialPosition = PiecePosition(move.position.row, move.position.col-1);
             pieces[rookInitialPosition.col][rookInitialPosition.row] = {None};
-            PiecePosition rookEndPosition = PiecePosition(move.position.row, move.position.col+1);
+            auto rookEndPosition = PiecePosition(move.position.row, move.position.col+1);
             pieces[rookEndPosition.col][rookEndPosition.row] = {Rook,movePiece.color,Moved};
         }
             break;
         case LongCastle: {
             MovePiece(piecePosition, move.position);
-            PiecePosition rookInitialPosition = PiecePosition(move.position.row, move.position.col+2);
+            auto rookInitialPosition = PiecePosition(move.position.row, move.position.col+2);
             pieces[rookInitialPosition.col][rookInitialPosition.row] = {None};
-            PiecePosition rookEndPosition = PiecePosition(move.position.row, move.position.col-1);
+            auto rookEndPosition = PiecePosition(move.position.row, move.position.col-1);
             pieces[rookEndPosition.col][rookEndPosition.row] = {Rook,movePiece.color,Moved};
             break;
         }
@@ -139,7 +142,6 @@ bool GameBoard::RowOccupied(PiecePosition initialPosition, int direction, int ch
         if (position.OutOfBounds()) return true;
 
         Piece piece = GetPiece(position);
-        std::cout << piece.type << std::endl;
         if (piece.type != None) return true;
     }
     return false;

@@ -11,6 +11,7 @@
 #include "SFML/Graphics/RenderWindow.hpp"
 #include <unordered_map>
 
+#include "Debug.h"
 #include "MoveSearcher.h"
 #include "SFML/Graphics/Sprite.hpp"
 #include "SFML/Graphics/Texture.hpp"
@@ -80,15 +81,17 @@ enum PieceLoadFlipMode {
     NoFlip,
     FlipIfWhite
 };
+
 static constexpr int TILE_SIZE = 60;
 
 class BoardRenderer {
 public:
-    BoardRenderer(std::unique_ptr<GameBoard> &gameboard, PieceColor viewColor);
+    BoardRenderer(std::unique_ptr<GameBoard> &gameboard, PieceColor viewColor,DebugOptions debugOptions);
 
     void Render(const std::unique_ptr<sf::RenderWindow>& window);
     void OnMouseDown(sf::Mouse::Button button, sf::Vector2i mousePosition);
     void OnMouseRelease(sf::Mouse::Button button, sf::Vector2i mousePosition);
+    void LoadChessIcon(const std::unique_ptr<sf::RenderWindow> &window);
 private:
     sf::RectangleShape squares[GRID_SIZE][GRID_SIZE];
     std::unique_ptr<sf::Sprite> pieceSprites[GRID_SIZE][GRID_SIZE];
@@ -100,6 +103,7 @@ private:
     std::unique_ptr<GameBoard>& gameBoard;
     PieceMoveQuery pieceMoveQuery;
     PieceColor viewColor;
+    DebugOptions debugOptions;
 
     void LoadGrid();
     void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window);

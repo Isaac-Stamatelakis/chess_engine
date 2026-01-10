@@ -7,10 +7,12 @@
 #include <iostream>
 
 #include "../include/MoveSearcher.h"
+#include "SFML/Graphics/Image.hpp"
 #include "SFML/Graphics/Sprite.hpp"
 #include "SFML/Graphics/Texture.hpp"
 
-BoardRenderer::BoardRenderer(std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor) : gameBoard(gameboard), viewColor(viewColor) {
+
+BoardRenderer::BoardRenderer(std::unique_ptr<GameBoard>& gameboard, PieceColor viewColor, DebugOptions debugOptions) : gameBoard(gameboard), viewColor(viewColor), debugOptions(debugOptions) {
     LoadGrid();
     LoadTextures();
     LoadGameBoard();
@@ -112,6 +114,11 @@ void BoardRenderer::OnMouseRelease(sf::Mouse::Button button, sf::Vector2i mouseP
     }
 }
 
+void BoardRenderer::LoadChessIcon(const std::unique_ptr<sf::RenderWindow>& window) {
+    sf::Texture iconTexture = LoadTexture("engine_icon");
+    sf::Image iconImage = iconTexture.copyToImage();
+    window->setIcon(iconImage);
+}
 
 
 void BoardRenderer::Render(const std::unique_ptr<sf::RenderWindow>& window) {
@@ -208,12 +215,15 @@ void BoardRenderer::SelectSquare(PiecePosition piecePosition) {
     highlightedSquares.Clear();
     if (piecePosition.OutOfBounds()) return;
 
+    const Piece& piece = gameBoard->GetPiece(piecePosition);
+    if ((debugOptions.flags & FreeMove) == 0 && piece.color == gameBoard->GetLastMove().piece.color) return;
+
     if (selectedPiecePosition == piecePosition) {
         selectedPieceFollowState = DoubleClick;
         return;
     }
 
-    const Piece& piece = gameBoard->GetPiece(piecePosition);
+
     if (piece.type == None) {
         ClearSelectedPiece();
         return;
@@ -307,7 +317,6 @@ void BoardRenderer::RenderMove(const PieceMove &move) {
             break;
         case EnPassant:
             break;
-
     }
 }
 

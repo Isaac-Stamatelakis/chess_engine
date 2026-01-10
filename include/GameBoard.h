@@ -5,7 +5,9 @@
 #ifndef CHESSENGINE_GAMEBOARD_H
 #define CHESSENGINE_GAMEBOARD_H
 #include <array>
+#include <cstdint>
 #include <iosfwd>
+#include <locale>
 #include <optional>
 #include <vector>
 
@@ -110,6 +112,19 @@ struct PieceDeclaration {
     PieceType type;
 };
 
+struct KingCheckData {
+    std::vector<PiecePosition> interceptPositions;
+    int attackers;
+};
+
+
+struct ColorBitBoards {
+    uint64_t occupiedSquares;
+    uint64_t attackedSquares;
+    uint64_t pinnedPieces;
+};
+
+
 class GameBoard {
 public:
     void LoadDefaultBoard();
@@ -125,12 +140,10 @@ public:
 private:
     void LoadPieceDeclarations(const std::vector<PieceDeclaration>& pieceDeclarations, PieceColor pieceColor, short row);
     Piece pieces[GRID_SIZE][GRID_SIZE];
-
     PieceMoveHistory pieceMoveHistory;
-
+    ColorBitBoards whiteBitBoard;
+    ColorBitBoards blackBitBoard;
 };
-
-
 
 
 #endif //CHESSENGINE_GAMEBOARD_H

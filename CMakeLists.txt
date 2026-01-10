@@ -17,7 +17,9 @@ add_executable(
         src/GameBoard.cpp
         src/MoveSearcher.cpp
         src/BoardRenderer.cpp
-        include/BoardRenderer.h)
+        include/BoardRenderer.h
+        include/Debug.h
+)
 
 target_compile_features(ChessEngine PRIVATE cxx_std_20)
 target_link_libraries(ChessEngine PRIVATE SFML::Graphics)
