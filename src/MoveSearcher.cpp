@@ -11,25 +11,25 @@ void MoveSearcher::GetValidMoves(PiecePosition piecePosition, PieceMoveQuery &mo
     const Piece& piece = gameBoard->GetPiece(piecePosition);
 
     switch (piece.type) {
-        case None:
+        case PieceType::None:
             moveQuery.moveCount = 0;
             break;
-        case King:
+        case PieceType::King:
             GetKingMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
-        case Queen:
+        case PieceType::Queen:
             GetQueenMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
-        case Rook:
+        case PieceType::Rook:
             GetRookMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
-        case Knight:
+        case PieceType::Knight:
             GetKnightMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
-        case Bishop:
+        case PieceType::Bishop:
             GetBishopMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
-        case Pawn:
+        case PieceType::Pawn:
             GetPawnMoves(piecePosition, moveQuery, gameBoard, piece);
             break;
     }
@@ -45,23 +45,23 @@ void MoveSearcher::GetKingMoves(PiecePosition piecePosition, PieceMoveQuery &mov
             const Piece& otherPiece = gameBoard->GetPiece(movePosition);
             if (otherPiece.type != PieceType::None && otherPiece.color == piece.color) continue;
             if (otherPiece.protectionState == OccuputationState::Protected) continue;
-            moveQuery.moves[idx] = PieceMove{ Standard,movePosition};
+            moveQuery.moves[idx] = PieceMove{MoveType::Standard,movePosition};
             idx++;
         }
     }
 
-    if (piece.moveState == Moved) {
+    if (piece.moveState == PieceMoveState::Moved) {
         moveQuery.moveCount = idx;
         return;
     }
 
     const int SHORT_CASTLE_DIRECTION = -1;
     const int SHORT_CASTLE_LENGTH = 2;
-    TryAddCastle(piece,piecePosition,moveQuery,gameBoard,idx,SHORT_CASTLE_DIRECTION,SHORT_CASTLE_LENGTH,ShortCastle);
+    TryAddCastle(piece,piecePosition,moveQuery,gameBoard,idx,SHORT_CASTLE_DIRECTION,SHORT_CASTLE_LENGTH, MoveType::ShortCastle);
 
     const int LONG_CASTLE_DIRECTION = 1;
     const int LONG_CASTLE_LENGTH = 3;
-    TryAddCastle(piece,piecePosition,moveQuery,gameBoard,idx,LONG_CASTLE_DIRECTION,LONG_CASTLE_LENGTH,LongCastle);
+    TryAddCastle(piece,piecePosition,moveQuery,gameBoard,idx,LONG_CASTLE_DIRECTION,LONG_CASTLE_LENGTH, MoveType::LongCastle);
 
     moveQuery.moveCount = idx;
 }
@@ -97,7 +97,7 @@ void MoveSearcher::GetKnightMoves(PiecePosition piecePosition, PieceMoveQuery &m
         // Skip friendly pieces
         if (targetPiece.type != PieceType::None && targetPiece.color == piece.color) continue;
 
-        moveQuery.moves[idx++] = PieceMove{ Standard,movePosition};
+        moveQuery.moves[idx++] = PieceMove{MoveType::Standard,movePosition};
     }
 
     moveQuery.moveCount = idx;
@@ -113,9 +113,9 @@ void MoveSearcher::GetBishopMoves(PiecePosition piecePosition, PieceMoveQuery &m
 
 void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, const Piece& piece) {
     std::cout << piecePosition.row << " " << piecePosition.col << std::endl;
-    MoveType moveType = Standard;
-    if ((piece.color == White && piecePosition.row >= GRID_SIZE-2) || (piece.color == Black && piecePosition.row <= 1)) {
-        moveType = Promotion;
+    MoveType moveType = MoveType::Standard;
+    if ((piece.color == PieceColor::White && piecePosition.row >= GRID_SIZE-2) || (piece.color == PieceColor::Black && piecePosition.row <= 1)) {
+        moveType = MoveType::Promotion;
     }
     const int captureSquares[2][2] = {
         {1, 1}, {-1, 1}
@@ -138,11 +138,11 @@ void MoveSearcher::GetPawnMoves(PiecePosition piecePosition, PieceMoveQuery &mov
     }
 
     AddPawnPushMove(piece,piecePosition,moveQuery,gameBoard,1,idx, direction, moveType);
-    if (piece.moveState == NotMoved && moveType != Promotion) {
-        AddPawnPushMove(piece,piecePosition,moveQuery,gameBoard,2,idx, direction, DoublePawnPush);
+    if (piece.moveState == PieceMoveState::NotMoved && moveType != MoveType::Promotion) {
+        AddPawnPushMove(piece,piecePosition,moveQuery,gameBoard,2,idx, direction, MoveType::DoublePawnPush);
     }
 
-    if (moveType != Promotion) { // Impossible to en passant promote
+    if (moveType != MoveType::Promotion) { // Impossible to en passant promote
         TryAddEnPassantMove(piece,piecePosition,moveQuery,gameBoard,idx,1,direction);
         TryAddEnPassantMove(piece,piecePosition,moveQuery,gameBoard,idx,-1,direction);
     }
@@ -172,7 +172,7 @@ void MoveSearcher::GenerateSlidingMoves(const Piece &piece, PiecePosition pieceP
             if (targetPiece.type != PieceType::None && targetPiece.color == piece.color)
                 break;
 
-            moveQuery.moves[idx] = PieceMove{ Standard,currentPos};
+            moveQuery.moves[idx] = PieceMove{MoveType::Standard,currentPos};
             idx = idx + 1;
 
             // Hit enemy piece
@@ -208,21 +208,21 @@ void MoveSearcher::TryAddEnPassantMove(const Piece &piece, PiecePosition piecePo
 
     PieceMoveHistory& lastMove = gameBoard->GetLastMove();
     Piece lastMovePiece = lastMove.piece;
-    if (lastMovePiece.type != Pawn || lastMove.piece.color == piece.color || lastMove.move.type != DoublePawnPush) return;
+    if (lastMovePiece.type != PieceType::Pawn || lastMove.piece.color == piece.color || lastMove.move.type != MoveType::DoublePawnPush) return;
 
     if (lastMove.move.position != adjacentPosition) return;
 
     PiecePosition movePosition(piecePosition.row+verticalDirection, piecePosition.col+horizontalDirection);
     if (movePosition.OutOfBounds()) return;
 
-    moveQuery.moves[idx++] = PieceMove{EnPassant,movePosition};
+    moveQuery.moves[idx++] = PieceMove{MoveType::EnPassant,movePosition};
 }
 
 void MoveSearcher::TryAddCastle(const Piece &piece, PiecePosition piecePosition, PieceMoveQuery &moveQuery, const std::unique_ptr<GameBoard> &gameBoard, int &idx, int castleDirection, int castleLength, MoveType moveType) {
     if (gameBoard->RowOccupied(piecePosition, castleDirection, castleLength)) return;
     PiecePosition lastPosition = PiecePosition(piecePosition.row,piecePosition.col+(castleLength+1)*castleDirection);
     Piece lastPiece = gameBoard->GetPiece(lastPosition);
-    if (lastPiece.type != Rook || lastPiece.moveState != NotMoved) return;
+    if (lastPiece.type != PieceType::Rook || lastPiece.moveState != PieceMoveState::NotMoved) return;
 
     const int KING_MOVEMENT = 2;
     PiecePosition shortCastleKingPosition = PiecePosition(piecePosition.row,piecePosition.col+KING_MOVEMENT*castleDirection);

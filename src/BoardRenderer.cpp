@@ -37,8 +37,8 @@ void BoardRenderer::LoadGameBoard() {
 void BoardRenderer::LoadPieceSprite(PiecePosition piecePosition, PieceLoadFlipMode flipMode) {
     const Piece& piece = gameBoard->GetPiece(piecePosition);
 
-    if (flipMode == FlipIfWhite && viewColor == White) {
-        piecePosition.InvertAxis(Vertical);
+    if (flipMode == FlipIfWhite && viewColor == PieceColor::White) {
+        piecePosition.InvertAxis(Axis::Vertical);
     }
     PieceTextureKey pieceTextureKey{piece.type,piece.color};
     if (!textures.pieceTextures.contains(pieceTextureKey)) return;;
@@ -134,6 +134,9 @@ void BoardRenderer::RenderGrid(const std::unique_ptr<sf::RenderWindow>& window) 
     sf::Color selectedColor(246, 246, 105);    // soft yellow (selected square)
     sf::Color highlightedColor(255, 80, 80);   // soft red (valid moves / attacks)
 
+    sf::Color debugWhite(245, 245, 220); // very light beige (almost white)
+    sf::Color debugBlack(80, 80, 80);    // dark gray (not pure black)
+
     for (int row = 0; row < GRID_SIZE; ++row)
     {
         for (int col = 0; col < GRID_SIZE; ++col)
@@ -148,15 +151,40 @@ void BoardRenderer::RenderGrid(const std::unique_ptr<sf::RenderWindow>& window) 
                 color = darkColor;
             }
 
+
             if (selectedPiecePosition.has_value() && selectedPiecePosition.value().row == piecePosition.row && selectedPiecePosition.value().col == piecePosition.col) {
                 squares[col][row].setFillColor(selectedColor);
             } else if (highlightedSquares.IsHighlighted(piecePosition)) {
                 squares[col][row].setFillColor(highlightedColor*color);
             } else {
                 squares[col][row].setFillColor(color);
+                if (debugOptions.flags & Occupancy)
+                {
+                    RenderDebug(ColorBitBoardType::Occupied, debugWhite, debugBlack, piecePosition, col, row);
+                }
+
+                if (debugOptions.flags & Attacks)
+                {
+                    RenderDebug(ColorBitBoardType::Attacked, debugWhite, debugBlack, piecePosition, col, row);
+                }
+
+                if (debugOptions.flags & Pinned)
+                {
+                    RenderDebug(ColorBitBoardType::Pinned, debugWhite, debugBlack, piecePosition, col, row);
+                }
             }
-            window->draw(squares[row][col]);
+            window->draw(squares[col][row]);
         }
+    }
+}
+
+void BoardRenderer::RenderDebug(ColorBitBoardType bitBoardType, sf::Color& debugWhiteColor, sf::Color& debugBlackColor, PiecePosition& piecePosition, int col, int row) {
+    if (gameBoard->GetColorBitBoards(PieceColor::White).IsActive(piecePosition,bitBoardType)) {
+        squares[col][row].setFillColor(debugWhiteColor);
+    }
+
+    if (gameBoard->GetColorBitBoards(PieceColor::Black).IsActive(piecePosition,bitBoardType)) {
+        squares[col][row].setFillColor(debugBlackColor);
     }
 }
 
@@ -224,7 +252,7 @@ void BoardRenderer::SelectSquare(PiecePosition piecePosition) {
     }
 
 
-    if (piece.type == None) {
+    if (piece.type == PieceType::None) {
         ClearSelectedPiece();
         return;
     }
@@ -264,7 +292,7 @@ void BoardRenderer::LoadMoveSprites(PiecePosition position) {
         PieceMove pieceMove = pieceMoveQuery.moves[i];
 
         const Piece& piece = gameBoard->GetPiece(pieceMove.position);
-        const sf::Texture& texture = piece.type == None ? textures.moveTexture : textures.captureTexture;
+        const sf::Texture& texture = piece.type == PieceType::None ? textures.moveTexture : textures.captureTexture;
 
         std::unique_ptr<sf::Sprite> sprite = std::make_unique<sf::Sprite>(texture);
         float rowPosition = TILE_SIZE * pieceMove.position.row;
@@ -300,24 +328,10 @@ void BoardRenderer::MoveSelectedPiece(const PieceMove &move) {
     if (!selectedPiecePosition.has_value()) return;
 
     gameBoard->ExecuteMove(move, selectedPiecePosition.value());
-    //RenderMove(move);
     LoadGameBoard();
     ClearSelectedPiece();
     ClearMoveSprites();
     pieceMoveQuery.moveCount = 0;
-}
-
-
-void BoardRenderer::RenderMove(const PieceMove &move) {
-    switch (move.type) {
-        case Standard:
-            pieceSprites[selectedPiecePosition->col][selectedPiecePosition->row] = nullptr;
-            pieceSprites[move.position.col][move.position.row] = nullptr;
-            LoadPieceSprite(move.position, NoFlip);
-            break;
-        case EnPassant:
-            break;
-    }
 }
 
 

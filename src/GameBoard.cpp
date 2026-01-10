@@ -13,31 +13,34 @@ void GameBoard::LoadDefaultBoard() {
     ClearBoard();
 
     std::vector<PieceDeclaration> pieceDeclarations = {
-        {Rook},
-        {Knight},
-        {Bishop},
-        {King},
-        {Queen},
-        {Bishop},
-        {Knight},
-        {Rook},
+        {PieceType::Rook},
+        {PieceType::Knight},
+        {PieceType::Bishop},
+        {PieceType::King},
+        {PieceType::Queen},
+        {PieceType::Bishop},
+        {PieceType::Knight},
+        {PieceType::Rook},
     };
 
     std::vector<PieceDeclaration> pawns;
     pawns.reserve(GRID_SIZE);
     for (int i = 0; i < GRID_SIZE; i++) {
-        pawns.push_back(PieceDeclaration{Pawn});
+        pawns.push_back(PieceDeclaration{PieceType::Pawn});
     }
 
-    LoadPieceDeclarations(pieceDeclarations,White, 0);
-    LoadPieceDeclarations(pawns,White, 1);
+    LoadPieceDeclarations(pieceDeclarations,PieceColor::White, 0);
+    LoadPieceDeclarations(pawns,PieceColor::White, 1);
 
-    LoadPieceDeclarations(pieceDeclarations,Black, 0);
-    LoadPieceDeclarations(pawns,Black, 1);
+    LoadPieceDeclarations(pieceDeclarations,PieceColor::Black, 0);
+    LoadPieceDeclarations(pawns,PieceColor::Black, 1);
 
-    Piece emptyPiece = {None,Black}; // Lets white go first
+    Piece emptyPiece = {PieceType::None,PieceColor::Black}; // Lets white go first
     PieceMove emptyMove = {};
     pieceMoveHistory = {emptyMove,emptyPiece};
+
+    whiteBitBoard = CalculateBitBoards(PieceColor::White);
+    blackBitBoard = CalculateBitBoards(PieceColor::Black);
 }
 
 void GameBoard::ClearBoard() {
@@ -45,8 +48,8 @@ void GameBoard::ClearBoard() {
     {
         for (Piece& piece : row)
         {
-            piece.type = None;
-            piece.moveState = NotMoved;
+            piece.type = PieceType::None;
+            piece.moveState = PieceMoveState::NotMoved;
         }
     }
     for (int i = 0; i < BOARD_SIZE; i++) {
@@ -54,63 +57,67 @@ void GameBoard::ClearBoard() {
     }
 }
 
-Piece GameBoard::GetPiece(PiecePosition position) {
+Piece &GameBoard::GetPiece(PiecePosition position) {
     return pieces[position.col][position.row];
 }
 
 void GameBoard::MovePiece(PiecePosition from, PiecePosition to) {
     Piece currentPiece = GetPiece(from);
-    currentPiece.moveState = Moved;
+    currentPiece.moveState = PieceMoveState::Moved;
     pieces[to.col][to.row] = currentPiece;
-    pieces[from.col][from.row] = Piece{None};
+    pieces[from.col][from.row] = Piece{PieceType::None};
 }
 
 void GameBoard::ExecuteMove(PieceMove move, PiecePosition piecePosition) {
     Piece movePiece = GetPiece(piecePosition);
     switch (move.type) {
-        case Standard:
-        case DoublePawnPush:
+        case MoveType::Standard:
+        case MoveType::DoublePawnPush:
             MovePiece(piecePosition, move.position);
             break;
-        case EnPassant: {
+        case MoveType::EnPassant: {
             MovePiece(piecePosition, move.position);
             PiecePosition adjacentPawnPosition = move.position;
-            if (movePiece.color == Black) {
+            if (movePiece.color == PieceColor::Black) {
                 adjacentPawnPosition.row++;
             } else {
                 adjacentPawnPosition.row--;
             }
-            pieces[adjacentPawnPosition.col][adjacentPawnPosition.row] = {None};
+            pieces[adjacentPawnPosition.col][adjacentPawnPosition.row] = {PieceType::None};
             break;
         }
-        case Promotion: {
+        case MoveType::Promotion: {
             MovePiece(piecePosition, move.position);
             Piece& piece = pieces[move.position.col][move.position.row];
-            if (move.promotion == None) {
-                move.promotion = Queen;
+            if (move.promotion == PieceType::None) {
+                move.promotion = PieceType::Queen;
             }
             piece.type = move.promotion;
             break;
         }
-        case ShortCastle: {
+        case MoveType::ShortCastle: {
             MovePiece(piecePosition, move.position);
             auto rookInitialPosition = PiecePosition(move.position.row, move.position.col-1);
-            pieces[rookInitialPosition.col][rookInitialPosition.row] = {None};
+            pieces[rookInitialPosition.col][rookInitialPosition.row] = {PieceType::None};
             auto rookEndPosition = PiecePosition(move.position.row, move.position.col+1);
-            pieces[rookEndPosition.col][rookEndPosition.row] = {Rook,movePiece.color,Moved};
+            pieces[rookEndPosition.col][rookEndPosition.row] = {PieceType::Rook,movePiece.color, PieceMoveState::Moved};
         }
             break;
-        case LongCastle: {
+        case MoveType::LongCastle: {
             MovePiece(piecePosition, move.position);
             auto rookInitialPosition = PiecePosition(move.position.row, move.position.col+2);
-            pieces[rookInitialPosition.col][rookInitialPosition.row] = {None};
+            pieces[rookInitialPosition.col][rookInitialPosition.row] = {PieceType::None};
             auto rookEndPosition = PiecePosition(move.position.row, move.position.col-1);
-            pieces[rookEndPosition.col][rookEndPosition.row] = {Rook,movePiece.color,Moved};
+            pieces[rookEndPosition.col][rookEndPosition.row] = {PieceType::Rook,movePiece.color, PieceMoveState::Moved};
             break;
         }
 
     }
     SetLastMove(move, movePiece);
+
+    // Naive
+    whiteBitBoard = CalculateBitBoards(PieceColor::White);
+    blackBitBoard = CalculateBitBoards(PieceColor::Black);
 }
 
 void GameBoard::SetLastMove(PieceMove move, Piece piece) {
@@ -123,17 +130,45 @@ PieceMoveHistory & GameBoard::GetLastMove() {
 
 void GameBoard::LoadPieceDeclarations(const std::vector<PieceDeclaration> &pieceDeclarations, PieceColor pieceColor, short row) {
     short col = 0;
-    short placementRow = pieceColor == White ? row : GRID_SIZE-row-1;
+    short placementRow = pieceColor == PieceColor::White ? row : GRID_SIZE-row-1;
     for (const auto& declaration : pieceDeclarations) {
         PiecePosition piecePosition{placementRow,col};
         if (piecePosition.OutOfBounds()) {
             throw std::runtime_error("Piece declaration out of bounds");
         }
 
-        Piece piece{declaration.type,pieceColor,NotMoved};
+        Piece piece{declaration.type,pieceColor, PieceMoveState::NotMoved};
         pieces[piecePosition.col][piecePosition.row] = piece;
         col++;
     }
+}
+
+ColorBitBoards & GameBoard::GetColorBitBoards(PieceColor pieceColor) {
+    switch (pieceColor) {
+        case PieceColor::Black:
+            return blackBitBoard;
+        case PieceColor::White:
+            return whiteBitBoard;
+        default:
+            throw std::runtime_error("Invalid PieceColor in GetColorBitBoards");
+    }
+}
+
+ColorBitBoards GameBoard::CalculateBitBoards(PieceColor pieceColor) {
+    uint64_t occupied = 0;
+
+    for (int col = 0; col < GRID_SIZE; ++col) {
+        for (int row = 0; row < GRID_SIZE; ++row) {
+            PiecePosition piecePosition(row,col);
+            Piece& piece = GetPiece(piecePosition);
+
+            if (pieceColor == piece.color && piece.type != PieceType::None) {
+                uint64_t mask = piecePosition.GetBitMapMask();
+                occupied |= mask;
+            }
+        }
+    }
+    return ColorBitBoards{occupied,0,0};
 }
 
 bool GameBoard::RowOccupied(PiecePosition initialPosition, int direction, int checkCount) {
@@ -142,7 +177,7 @@ bool GameBoard::RowOccupied(PiecePosition initialPosition, int direction, int ch
         if (position.OutOfBounds()) return true;
 
         Piece piece = GetPiece(position);
-        if (piece.type != None) return true;
+        if (piece.type != PieceType::None) return true;
     }
     return false;
 }

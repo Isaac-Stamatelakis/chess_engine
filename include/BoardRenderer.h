@@ -107,6 +107,10 @@ private:
 
     void LoadGrid();
     void RenderGrid(const std::unique_ptr<sf::RenderWindow>& window);
+
+    void RenderDebug(ColorBitBoardType bitBoardType, sf::Color &debugWhiteColor, sf::Color &debugBlackColor, PiecePosition &piecePosition, int
+                     col, int row);
+
     void RenderPieces(const std::unique_ptr<sf::RenderWindow>& window);
     void RenderMovePositions(const std::unique_ptr<sf::RenderWindow>& window) const;
     void LoadTextures();
@@ -122,8 +126,6 @@ private:
     void MoveSelectedPiece(const PieceMove& move);
     void LoadPieceSprite(PiecePosition piecePosition, PieceLoadFlipMode flipMode);
     void ClearSelectedPiece();
-    void RenderMove(const PieceMove &move);
-
     PieceMoveResult TryMoveToPosition(PiecePosition piecePosition);
 };
 

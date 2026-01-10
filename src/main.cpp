@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     std::unique_ptr<sf::RenderWindow> window = std::make_unique<sf::RenderWindow>(sf::VideoMode({GRID_SIZE*TILE_SIZE, GRID_SIZE*TILE_SIZE}), "Chess Engine");
     window->setFramerateLimit(144);
 
-    std::unique_ptr<BoardRenderer> boardRenderer = std::make_unique<BoardRenderer>(gameBoard, Black,debugOptions);
+    std::unique_ptr<BoardRenderer> boardRenderer = std::make_unique<BoardRenderer>(gameBoard, PieceColor::Black,debugOptions);
     boardRenderer->LoadChessIcon(window);
 
     while (window->isOpen())
